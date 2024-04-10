@@ -3,9 +3,8 @@ package main
 import (
 	"fmt"
 	"net"
-	"hash/fnv"
-	"encoding/binary"
 	"context"
+	"io"
 	"os"
 	"os/signal"
 	"syscall"
@@ -79,7 +78,6 @@ func runServerThread(threadIndex int) {
 		if len(response) != 8 {
 			return
 		}
-		fmt.Printf("write response\n")
 		conn.WriteToUDP(response[:], from)
 	}	
 }
