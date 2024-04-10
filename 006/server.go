@@ -19,8 +19,11 @@ const NumThreads = 64
 const ServerPort = 40000
 const MaxPacketSize = 1500
 const SocketBufferSize = 100*1024*1024
+const BlockSize = 100
 
 var httpClient *http.Client
+
+var channel chan []byte
 
 func main() {
 
@@ -28,15 +31,28 @@ func main() {
 
     httpClient = &http.Client{Transport: &http.Transport{MaxIdleConnsPerHost: 1000}, Timeout: 1 * time.Second}
 
+    channel := make(chan []byte)
+
 	for i := 0; i < NumThreads; i++ {
 		go func(threadIndex int) {
 			runServerThread(threadIndex)
 		}(i)
 	}
 
+	go func() {
+		runWorkerThread()
+	}
+
 	termChan := make(chan os.Signal, 1)
 	signal.Notify(termChan, os.Interrupt, syscall.SIGTERM)
 	<-termChan
+}
+
+func runWorkerThread() {
+	for {
+		request := <- channel
+		fmt.Printf("worker request\n")
+	}
 }
 
 func runServerThread(threadIndex int) {
@@ -81,11 +97,7 @@ func runServerThread(threadIndex int) {
 			continue
 		}
 		request := buffer[:packetBytes]
-		response := PostBinary(BackendURL, request)
-		if len(response) != 8 {
-			return
-		}
-		conn.WriteToUDP(response[:], from)
+		channel <- request
 	}	
 }
 
