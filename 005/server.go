@@ -26,7 +26,7 @@ func main() {
 
 	fmt.Printf("starting %d server threads on port %d\n", NumThreads, ServerPort)
 
-    httpClient = &http.Client{Transport: &http.Transport{MaxIdleConnsPerHost: 1000000}, Timeout: 1 * time.Second}
+    httpClient = &http.Client{Transport: &http.Transport{MaxIdleConnsPerHost: 1000}, Timeout: 1 * time.Second}
 
 	for i := 0; i < NumThreads; i++ {
 		go func(threadIndex int) {
