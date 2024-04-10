@@ -45,7 +45,7 @@ func main() {
     channel = make(chan Request)
 
 	for i := 0; i < NumThreads; i++ {
-		createServerSocket(threadIndex)
+		createServerSocket(i)
 	}
 
 	for i := 0; i < NumThreads; i++ {
