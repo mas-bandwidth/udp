@@ -13,7 +13,7 @@ import (
 	"math/rand"
 )
 
-const NumClients = 20000
+const NumClients = 45000
 const MaxPacketSize = 1500
 const SocketBufferSize = 100*1024*1024
 
