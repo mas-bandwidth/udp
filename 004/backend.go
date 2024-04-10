@@ -25,7 +25,6 @@ func hash(w http.ResponseWriter, req *http.Request) {
 	request, err := io.ReadAll(req.Body)
 	if err != nil || len(request) != 100 {
 		w.WriteHeader(http.StatusBadRequest)
-		fmt.Printf("bad request\n")
 		return
 	}
 	hash := fnv.New64a()
@@ -34,7 +33,5 @@ func hash(w http.ResponseWriter, req *http.Request) {
 	response := [8]byte{}
 	binary.LittleEndian.PutUint64(response[:], data)
 	w.Write(response[:])
-	w.WriteHeader(http.StatusOK)
-	fmt.Printf("response\n")
 	return
 }
