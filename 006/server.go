@@ -132,7 +132,7 @@ func runWorkerThread() {
 				for i := 0; i < RequestsPerBlock; i++ {
 					ip := response[responseIndex:responseIndex+4]
 					port := binary.LittleEndian.Uint16(response[responseIndex+4:responseIndex+6])
-					from := net.UDPAddr{IP: ip, Port: port}
+					from := net.UDPAddr{IP: ip, Port: int(port)}
 					responseIndex += ResponseSize
 					socketIndex := i % NumThreads
 					socket[socketIndex].WriteToUDP(response[responseIndex+6:responseIndex+6+8], &from)
