@@ -126,6 +126,7 @@ func runWorkerThread() {
 		copy(block[index+6:index+RequestSize], request.data)
 		index += RequestSize
 		if index == BlockSize {
+			fmt.Printf("send block\n")
 			response := PostBinary(BackendURL, block)
 			if len(response) == ResponseSize * RequestsPerBlock {
 				responseIndex := 0
