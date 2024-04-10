@@ -23,6 +23,7 @@ const SocketBufferSize = 100*1024*1024
 const RequestsPerBlock = 1000
 const RequestSize = 4 + 2 + 100
 const BlockSize = RequestsPerBlock * RequestSize
+const ResponseSize = 4 + 2 + 8
 
 var httpClient *http.Client
 
@@ -33,6 +34,8 @@ type Request struct {
 
 var channel chan Request
 
+var socket [NumThreads]*net.UDPConn
+
 func main() {
 
 	fmt.Printf("starting %d server threads on port %d\n", NumThreads, ServerPort)
@@ -40,6 +43,10 @@ func main() {
     httpClient = &http.Client{Transport: &http.Transport{MaxIdleConnsPerHost: 1000}, Timeout: 1 * time.Second}
 
     channel = make(chan Request)
+
+	for i := 0; i < NumThreads; i++ {
+		createServerSocket(threadIndex)
+	}
 
 	for i := 0; i < NumThreads; i++ {
 		go func(threadIndex int) {
@@ -56,24 +63,7 @@ func main() {
 	<-termChan
 }
 
-func runWorkerThread() {
-	index := 0
-	block := make([]byte, BlockSize)
-	for {
-		request := <- channel
-		copy(block[index:], request.from.IP.To4())
-		binary.LittleEndian.PutUint16(block[index+4:index+6], uint16(request.from.Port))
-		copy(block[index+6:index+RequestSize], request.data)
-		index += RequestSize
-		if index == BlockSize {
-			fmt.Printf("sent block\n")
-			// todo: send to http
-			index = 0
-		}
-	}
-}
-
-func runServerThread(threadIndex int) {
+func createServerSocket(threadIndex int) {
 
 	lc := net.ListenConfig{
 		Control: func(network string, address string, c syscall.RawConn) error {
@@ -93,6 +83,11 @@ func runServerThread(threadIndex int) {
 	}
 
 	conn := lp.(*net.UDPConn)
+
+	socket[threadIndex] = conn
+}
+
+func runServerThread(threadIndex int) {
 
 	defer lp.Close()
 
@@ -117,6 +112,33 @@ func runServerThread(threadIndex int) {
 		request := Request{data: buffer[:packetBytes], from: *from}
 		channel <- request
 	}	
+}
+
+func runWorkerThread() {
+	index := 0
+	block := make([]byte, BlockSize)
+	for {
+		request := <- channel
+		copy(block[index:], request.from.IP.To4())
+		binary.LittleEndian.PutUint16(block[index+4:index+6], uint16(request.from.Port))
+		copy(block[index+6:index+RequestSize], request.data)
+		index += RequestSize
+		if index == BlockSize {
+			response := PostBinary(BackendURL, block)
+			if len(response) == ResponseSize * RequestsPerBlock {
+				responseIndex := 0
+				for i := 0; i < RequestsPerBlock; i++ {
+					port := binary.LittleEndian.Uint16(response[responseindex+4])
+					from := UDPAddr{IP: response[responseIndex], Port: port}
+					responseIndex += ResponseSize
+					socketIndex := i % NumThreads
+					socket[socketIndex].SendToUDP(response[responseIndex+6:responseIndex+6+8], &from)
+				}
+
+			}
+			index = 0
+		}
+	}
 }
 
 func PostBinary(url string, data []byte) []byte {
