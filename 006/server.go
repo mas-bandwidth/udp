@@ -102,7 +102,7 @@ func runServerThread(threadIndex int) {
 		if packetBytes != 100 {
 			continue
 		}
-		request := Request{data: buffer[:packetBytes], *from}
+		request := Request{data: buffer[:packetBytes], from: *from}
 		channel <- request
 	}	
 }
