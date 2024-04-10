@@ -66,7 +66,7 @@ func runWorkerThread() {
 		copy(block[index+6:index+RequestSize], request.data)
 		index += RequestSize
 		if index == BlockSize {
-			fmt.Printf("sent block\n", len(block))
+			fmt.Printf("sent block\n")
 			// todo: send to http
 			index = 0
 		}
