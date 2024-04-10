@@ -75,14 +75,12 @@ func runServerThread(threadIndex int) {
 		if packetBytes != 100 {
 			continue
 		}
-		go func() {
-			request := buffer[:packetBytes]
-			response := PostBinary(BackendURL, request)
-			if len(response) != 8 {
-				return
-			}
-			conn.WriteToUDP(response[:], from)
-		}()		
+		request := buffer[:packetBytes]
+		response := PostBinary(BackendURL, request)
+		if len(response) != 8 {
+			return
+		}
+		conn.WriteToUDP(response[:], from)
 	}	
 }
 
