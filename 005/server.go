@@ -20,7 +20,7 @@ const ServerPort = 40000
 const MaxPacketSize = 1500
 const SocketBufferSize = 100*1024*1024
 
-var httpClients *http.Client
+var httpClient *http.Client
 
 func main() {
 
