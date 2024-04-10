@@ -130,7 +130,7 @@ func runWorkerThread() {
 			if len(response) == ResponseSize * RequestsPerBlock {
 				responseIndex := 0
 				for i := 0; i < RequestsPerBlock; i++ {
-					ip := AddrFrom4(response[responseIndex:responseIndex+4])
+					ip := net.AddrFrom4(response[responseIndex:responseIndex+4])
 					port := binary.LittleEndian.Uint16(response[responseIndex+4:responseIndex+6])
 					from := net.UDPAddr{IP: ip, Port: port}
 					responseIndex += ResponseSize
