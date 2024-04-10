@@ -20,13 +20,13 @@ const ServerPort = 40000
 const MaxPacketSize = 1500
 const SocketBufferSize = 100*1024*1024
 
-var httpClient *http.Client
+var httpClients *http.Client
 
 func main() {
 
 	fmt.Printf("starting %d server threads on port %d\n", NumThreads, ServerPort)
 
-    httpClient = &http.Client{Transport: &http.Transport{MaxIdleConnsPerHost: 1000}, Timeout: 10 * time.Second}
+    httpClient = &http.Client{Transport: &http.Transport{MaxIdleConnsPerHost: 100000}, Timeout: 10 * time.Second}
 
 	for i := 0; i < NumThreads; i++ {
 		go func(threadIndex int) {
