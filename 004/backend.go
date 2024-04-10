@@ -3,6 +3,7 @@ package main
 import (
 	"fmt"
 	"os"
+	"io"
 	"net/http"
 )
 
@@ -19,13 +20,17 @@ func main() {
 }
 
 func hash(w http.ResponseWriter, req *http.Request) {
-	fmt.Fprintf(w, "hello\n")
+	request, err := io.ReadAll(req.Body)
+	if err != nil {
+		w.WriteHeader(http.StatusBadRequest)
+		return
+	}
+	hash := fnv.New64a()
+	hash.Write(buffer[:packetBytes])
+	data := hash.Sum64()
+	response := [8]byte{}
+	binary.LittleEndian.PutUint64(responsePacket[:], data)
+	fmt.Fwrite(w, response)
+	w.WriteHeader(http.StatusOK)
+	return
 }
-
-/*
-		hash := fnv.New64a()
-		hash.Write(buffer[:packetBytes])
-		data := hash.Sum64()
-		responsePacket := [8]byte{}
-		binary.LittleEndian.PutUint64(responsePacket[:], data)
-*/
