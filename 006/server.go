@@ -48,6 +48,11 @@ func main() {
 	<-termChan
 }
 
+type Request struct {
+	data []byte
+	from net.UDPAddr
+}
+
 func runWorkerThread() {
 	for {
 		request := <- channel
@@ -97,9 +102,8 @@ func runServerThread(threadIndex int) {
 		if packetBytes != 100 {
 			continue
 		}
-		request := buffer[:packetBytes]
+		request := Request{data: buffer[:packetBytes], *from}
 		channel <- request
-		_ = from
 	}	
 }
 
