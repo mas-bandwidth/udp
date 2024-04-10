@@ -10,7 +10,7 @@ const BackendPort = 50000
 func main() {
 	fmt.Printf("starting backend on port %d\n", BackendPort)
 	http.HandleFunc("/hash", hash)
-	err := http.ListenAndServe(fmt.Printf("127.0.0.1:%d", BackendPort), nil)
+	err := http.ListenAndServe(fmt.Sprintf("127.0.0.1:%d", BackendPort), nil)
 	if err != nil {
 		core.Error("error starting http server: %v", err)
 		os.Exit(1)
