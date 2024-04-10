@@ -71,7 +71,6 @@ func runServerThread(threadIndex int) {
 			break
 		}
 		if packetBytes != 100 {
-			fmt.Printf("not 100 bytes\n")
 			continue
 		}
 		hash := fnv.New64a()

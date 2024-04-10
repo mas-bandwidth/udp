@@ -12,6 +12,7 @@ import (
 	"golang.org/x/sys/unix"
 )
 
+const BackendURL = "http://127.0.0.1:50000/hash"
 const NumThreads = 64
 const ServerPort = 40000
 const MaxPacketSize = 1500
@@ -71,14 +72,36 @@ func runServerThread(threadIndex int) {
 			break
 		}
 		if packetBytes != 100 {
-			fmt.Printf("not 100 bytes\n")
 			continue
 		}
-		hash := fnv.New64a()
-		hash.Write(buffer[:packetBytes])
-		data := hash.Sum64()
-		responsePacket := [8]byte{}
-		binary.LittleEndian.PutUint64(responsePacket[:], data)
-		conn.WriteToUDP(responsePacket[:], from)
+		request := buffer[:packetBytes]
+		response := PostBinary(BackendURL, request)
+		if len(response) != 8 {
+			return
+		}
+		conn.WriteToUDP(response[:], from)
 	}	
+}
+
+func PostBinary(url string, data []byte) []byte {
+	buffer := bytes.NewBuffer(data)
+	request, _ := http.NewRequest("POST", url, buffer)
+	request.Header.Add("Content-Type", "application/octet-stream")
+	httpClient := &http.Client{}
+	response, err := httpClient.Do(request)
+	if err != nil {
+		fmt.Printf("post error: %v", err)
+		return nil
+	}
+	if response.StatusCode != 200 {
+		fmt.Printf("got response %d", response.StatusCode)
+		return nil
+	}
+	body, error := io.ReadAll(response.Body)
+	if error != nil {
+		fmt.Printf("could not read response: %v", err)
+		return nil
+	}
+	response.Body.Close()
+	return body
 }
