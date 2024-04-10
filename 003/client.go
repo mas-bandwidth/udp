@@ -13,9 +13,9 @@ import (
 	"math/rand"
 )
 
-const NumClients = 1000
+const NumClients = 10000
 const MaxPacketSize = 1500
-const SocketBufferSize = 1024*1024
+const SocketBufferSize = 100*1024*1024
 
 var quit uint64
 var packetsSent uint64
