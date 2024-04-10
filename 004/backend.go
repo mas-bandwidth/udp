@@ -32,7 +32,7 @@ func hash(w http.ResponseWriter, req *http.Request) {
 	data := hash.Sum64()
 	response := [8]byte{}
 	binary.LittleEndian.PutUint64(response[:], data)
-	w.Write(response)
+	w.Write(response[:])
 	w.WriteHeader(http.StatusOK)
 	return
 }
