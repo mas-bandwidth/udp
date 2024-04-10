@@ -89,7 +89,9 @@ func createServerSocket(threadIndex int) {
 
 func runServerThread(threadIndex int) {
 
-	defer lp.Close()
+	conn := socket[threadIndex]
+
+	defer conn.Close()
 
 	if err := conn.SetReadBuffer(SocketBufferSize); err != nil {
 		panic(fmt.Sprintf("could not set socket read buffer size: %v", err))
