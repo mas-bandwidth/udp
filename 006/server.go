@@ -60,7 +60,6 @@ func runWorkerThread() {
 	block := make([]byte, BlockSize)
 	for {
 		request := <- channel
-		fmt.Printf("worker request\n")
 		// todo
 		_ = request
 		index += RequestSize
