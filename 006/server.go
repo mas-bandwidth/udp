@@ -11,6 +11,7 @@ import (
 	"syscall"
 	"bytes"
 	"net/http"
+	"encoding/binary"
 	"golang.org/x/sys/unix"
 )
 
