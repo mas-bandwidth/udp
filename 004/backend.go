@@ -6,6 +6,7 @@ import (
 	"io"
 	"hash/fnv"
 	"net/http"
+	"encoding/binary"
 )
 
 const BackendPort = 50000
@@ -30,7 +31,7 @@ func hash(w http.ResponseWriter, req *http.Request) {
 	hash.Write(request)
 	data := hash.Sum64()
 	response := [8]byte{}
-	binary.LittleEndian.PutUint64(responsePacket[:], data)
+	binary.LittleEndian.PutUint64(response[:], data)
 	fmt.Fwrite(w, response)
 	w.WriteHeader(http.StatusOK)
 	return
