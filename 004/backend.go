@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"os"
 	"io"
+	"hash/fnv"
 	"net/http"
 )
 
