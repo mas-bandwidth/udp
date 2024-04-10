@@ -12,10 +12,10 @@ import (
 	"golang.org/x/sys/unix"
 )
 
-const NumThreads = 1 // 32
+const NumThreads = 64
 const ServerPort = 40000
 const MaxPacketSize = 1500
-const SocketBufferSize = 2*1024*1024
+const SocketBufferSize = 100*1024*1024
 
 func main() {
 
