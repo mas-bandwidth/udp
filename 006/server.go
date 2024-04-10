@@ -56,16 +56,18 @@ func main() {
 }
 
 func runWorkerThread() {
-	block := make([]byte, 0, BlockSize*(4+2+100))
+	index := 0
+	block := make([]byte, BlockSize)
 	for {
 		request := <- channel
 		fmt.Printf("worker request\n")
-		entryData := 
-		block = append(block, entryData)
-		if len(block) == BlockSize {
+		// todo
+		_ = request
+		index += RequestSize
+		if index == BlockSize {
 			fmt.Printf("sent %d byte block\n", len(block))
 			// todo: send to http
-			block := make([]byte, 0, BlockSize*(4+2+100))
+			index = 0
 		}
 	}
 }
