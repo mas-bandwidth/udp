@@ -19,9 +19,13 @@ const ServerPort = 40000
 const MaxPacketSize = 1500
 const SocketBufferSize = 100*1024*1024
 
+var httpClient *http.Client
+
 func main() {
 
 	fmt.Printf("starting %d server threads on port %d\n", NumThreads, ServerPort)
+
+    httpClient := &http.Client{Transport: &http.Transport{MaxIdleConnsPerHost: 20}, Timeout: 10 * time.Second}
 
 	for i := 0; i < NumThreads; i++ {
 		go func(threadIndex int) {
@@ -88,11 +92,11 @@ func PostBinary(url string, data []byte) []byte {
 	buffer := bytes.NewBuffer(data)
 	request, _ := http.NewRequest("POST", url, buffer)
 	request.Header.Add("Content-Type", "application/octet-stream")
-	httpClient := &http.Client{Timeout: 1.0}
 	response, err := httpClient.Do(request)
 	if err != nil {
 		return nil
 	}
+	defer response.Body.Close()
 	if response.StatusCode != 200 {
 		return nil
 	}
@@ -100,6 +104,5 @@ func PostBinary(url string, data []byte) []byte {
 	if error != nil {
 		return nil
 	}
-	response.Body.Close()
 	return body
 }
