@@ -93,16 +93,13 @@ func PostBinary(url string, data []byte) []byte {
 	httpClient := &http.Client{Timeout: 1.0}
 	response, err := httpClient.Do(request)
 	if err != nil {
-		fmt.Printf("post error: %v", err)
 		return nil
 	}
 	if response.StatusCode != 200 {
-		fmt.Printf("got response %d", response.StatusCode)
 		return nil
 	}
 	body, error := io.ReadAll(response.Body)
 	if error != nil {
-		fmt.Printf("could not read response: %v", err)
 		return nil
 	}
 	response.Body.Close()
