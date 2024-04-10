@@ -13,7 +13,8 @@ import (
 	"math/rand"
 )
 
-const NumClients = 45000
+const StartPort = 5000
+const NumClients = 60000
 const MaxPacketSize = 1500
 const SocketBufferSize = 100*1024*1024
 
@@ -82,13 +83,13 @@ func main() {
 func runClient(clientIndex int, serverAddress *net.UDPAddr) {
 
 	addr := net.UDPAddr{
-	    Port: 0,
+	    Port: StartPort + clientIndex,
 	    IP:   net.ParseIP("127.0.0.1"),
 	}
 
 	conn, err := net.ListenUDP("udp", &addr)
 	if err != nil {
-		panic(fmt.Sprintf("could not create udp socket: %v", err))
+		return // IMPORTANT: to get as many clients as possible on one machine, if we can't bind to a specific port, just ignore and carry on
 	}
 	defer conn.Close()
 
