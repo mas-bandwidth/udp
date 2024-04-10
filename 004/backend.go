@@ -12,7 +12,7 @@ func main() {
 	http.HandleFunc("/hash", hash)
 	err := http.ListenAndServe(fmt.Sprintf("127.0.0.1:%d", BackendPort), nil)
 	if err != nil {
-		core.Error("error starting http server: %v", err)
+		fmt.Printf("error: error starting http server: %v", err)
 		os.Exit(1)
 	}
 }
