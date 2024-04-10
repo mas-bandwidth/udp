@@ -19,7 +19,9 @@ const NumThreads = 64
 const ServerPort = 40000
 const MaxPacketSize = 1500
 const SocketBufferSize = 100*1024*1024
-const BlockSize = 100
+const RequestsPerBlock = 1000
+const RequestSize = 4 + 2 + 100
+const BlockSize = RequestsPerBlock * RequestSize
 
 var httpClient *http.Client
 
@@ -54,10 +56,17 @@ func main() {
 }
 
 func runWorkerThread() {
+	block := make([]byte, 0, BlockSize*(4+2+100))
 	for {
 		request := <- channel
 		fmt.Printf("worker request\n")
-		_ = request
+		entryData := 
+		block = append(block, entryData)
+		if len(block) == BlockSize {
+			fmt.Printf("sent %d byte block\n", len(block))
+			// todo: send to http
+			block := make([]byte, 0, BlockSize*(4+2+100))
+		}
 	}
 }
 
