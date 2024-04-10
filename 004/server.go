@@ -79,6 +79,7 @@ func runServerThread(threadIndex int) {
 		if len(response) != 8 {
 			return
 		}
+		fmt.Printf("write response\n")
 		conn.WriteToUDP(response[:], from)
 	}	
 }
