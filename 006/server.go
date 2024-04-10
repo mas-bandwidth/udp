@@ -23,7 +23,12 @@ const BlockSize = 100
 
 var httpClient *http.Client
 
-var channel chan []byte
+type Request struct {
+	data []byte
+	from net.UDPAddr
+}
+
+var channel chan Request
 
 func main() {
 
@@ -31,7 +36,7 @@ func main() {
 
     httpClient = &http.Client{Transport: &http.Transport{MaxIdleConnsPerHost: 1000}, Timeout: 1 * time.Second}
 
-    channel = make(chan []byte)
+    channel = make(chan Request)
 
 	for i := 0; i < NumThreads; i++ {
 		go func(threadIndex int) {
@@ -46,11 +51,6 @@ func main() {
 	termChan := make(chan os.Signal, 1)
 	signal.Notify(termChan, os.Interrupt, syscall.SIGTERM)
 	<-termChan
-}
-
-type Request struct {
-	data []byte
-	from net.UDPAddr
 }
 
 func runWorkerThread() {
