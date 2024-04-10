@@ -8,7 +8,7 @@ import (
 )
 
 const ServerPort = 40000
-const MaxPacketSize = 100
+const MaxPacketSize = 1500
 
 func main() {
 

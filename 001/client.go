@@ -13,8 +13,8 @@ import (
 	"math/rand"
 )
 
-const NumClients = 1000
-const MaxPacketSize = 100
+const NumClients = 100
+const MaxPacketSize = 1500
 
 var quit uint64
 var packetsSent uint64
