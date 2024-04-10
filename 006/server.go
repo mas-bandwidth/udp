@@ -62,7 +62,7 @@ func runWorkerThread() {
 	for {
 		request := <- channel
 		copy(block[index:], request.from.IP.To4())
-		binary.LittleEndian.PutUint16(block[index+4:index+6], request.from.Port)
+		binary.LittleEndian.PutUint16(block[index+4:index+6], uint16(request.from.Port))
 		copy(block[index+6:index+RequestSize], request.data)
 		index += RequestSize
 		if index == BlockSize {
