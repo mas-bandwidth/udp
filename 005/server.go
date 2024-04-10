@@ -75,12 +75,14 @@ func runServerThread(threadIndex int) {
 		if packetBytes != 100 {
 			continue
 		}
-		request := buffer[:packetBytes]
-		response := PostBinary(BackendURL, request)
-		if len(response) != 8 {
-			return
-		}
-		conn.WriteToUDP(response[:], from)
+		go func() {
+			request := buffer[:packetBytes]
+			response := PostBinary(BackendURL, request)
+			if len(response) != 8 {
+				return
+			}
+			conn.WriteToUDP(response[:], from)
+		}()		
 	}	
 }
 
@@ -88,7 +90,7 @@ func PostBinary(url string, data []byte) []byte {
 	buffer := bytes.NewBuffer(data)
 	request, _ := http.NewRequest("POST", url, buffer)
 	request.Header.Add("Content-Type", "application/octet-stream")
-	httpClient := &http.Client{}
+	httpClient := &http.Client{Timeout: 1.0}
 	response, err := httpClient.Do(request)
 	if err != nil {
 		fmt.Printf("post error: %v", err)
