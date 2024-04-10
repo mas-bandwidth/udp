@@ -31,7 +31,7 @@ func main() {
 
     httpClient = &http.Client{Transport: &http.Transport{MaxIdleConnsPerHost: 1000}, Timeout: 1 * time.Second}
 
-    channel := make(chan []byte)
+    channel = make(chan []byte)
 
 	for i := 0; i < NumThreads; i++ {
 		go func(threadIndex int) {
@@ -41,7 +41,7 @@ func main() {
 
 	go func() {
 		runWorkerThread()
-	}
+	}()
 
 	termChan := make(chan os.Signal, 1)
 	signal.Notify(termChan, os.Interrupt, syscall.SIGTERM)
@@ -52,6 +52,7 @@ func runWorkerThread() {
 	for {
 		request := <- channel
 		fmt.Printf("worker request\n")
+		_ = request
 	}
 }
 
@@ -98,6 +99,7 @@ func runServerThread(threadIndex int) {
 		}
 		request := buffer[:packetBytes]
 		channel <- request
+		_ = from
 	}	
 }
 
