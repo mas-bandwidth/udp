@@ -21,12 +21,12 @@ func main() {
 
 func hash(w http.ResponseWriter, req *http.Request) {
 	request, err := io.ReadAll(req.Body)
-	if err != nil {
+	if err != nil || len(request) != 100 {
 		w.WriteHeader(http.StatusBadRequest)
 		return
 	}
 	hash := fnv.New64a()
-	hash.Write(buffer[:packetBytes])
+	hash.Write(request)
 	data := hash.Sum64()
 	response := [8]byte{}
 	binary.LittleEndian.PutUint64(responsePacket[:], data)
