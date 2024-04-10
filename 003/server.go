@@ -37,12 +37,7 @@ func runServerThread(threadIndex int) {
 	lc := net.ListenConfig{
 		Control: func(network string, address string, c syscall.RawConn) error {
 			err := c.Control(func(fileDescriptor uintptr) {
-				err := unix.SetsockoptInt(int(fileDescriptor), unix.SOL_SOCKET, unix.SO_REUSEADDR, 1)
-				if err != nil {
-					panic(fmt.Sprintf("failed to set reuse address socket option: %v", err))
-				}
-
-				err = unix.SetsockoptInt(int(fileDescriptor), unix.SOL_SOCKET, unix.SO_REUSEPORT, 1)
+				err := unix.SetsockoptInt(int(fileDescriptor), unix.SOL_SOCKET, unix.SO_REUSEPORT, 1)
 				if err != nil {
 					panic(fmt.Sprintf("failed to set reuse port socket option: %v", err))
 				}
