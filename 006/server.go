@@ -60,11 +60,12 @@ func runWorkerThread() {
 	block := make([]byte, BlockSize)
 	for {
 		request := <- channel
-		// todo
-		_ = request
+		copy(block[index:], request.from.IP.To4())
+		binary.LittleEndian.PutUint16(block[index+4:index+6], request.from.Port)
+		copy(block[index+6:index+RequestSize], request.data)
 		index += RequestSize
 		if index == BlockSize {
-			fmt.Printf("sent %d byte block\n", len(block))
+			fmt.Printf("sent block\n", len(block))
 			// todo: send to http
 			index = 0
 		}
