@@ -255,7 +255,7 @@ resource "google_compute_instance" "server" {
   }
 
   metadata = {
-    startup-script = <<-EOF
+    startup-script = <<-EOF2
     #!/bin/bash
     NEEDRESTART_SUSPEND=1 apt update -y
     NEEDRESTART_SUSPEND=1 apt upgrade -y
@@ -264,8 +264,13 @@ resource "google_compute_instance" "server" {
     cd /app
     gsutil cp gs://${var.google_org_id}_udp_source/source-${var.tag}.zip .
     unzip *.zip
+    export HOME=/app
     go get
-    EOF
+    go build server.go
+    cp server.service /etc/systemd/system/server.service
+    systemctl daemon-reload
+    systemctl start server.service
+    EOF2
   }
 
   service_account {
