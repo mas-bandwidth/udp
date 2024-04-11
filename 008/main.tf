@@ -64,6 +64,10 @@ data "local_file" "client_go" {
   filename = "client.go"
 }
 
+data "local_file" "client_service" {
+  filename = "client.service"
+}
+
 data "local_file" "server_go" {
   filename = "server.go"
 }
@@ -90,6 +94,10 @@ data "archive_file" "source_zip" {
   source {
     filename = "client.go"
     content  = data.local_file.client_go.content
+  }
+  source {
+    filename = "client.service"
+    content  = data.local_file.client_service.content
   }
   source {
     filename = "server.go"
@@ -182,11 +190,6 @@ resource "google_compute_firewall" "allow_ssh" {
 
 # ----------------------------------------------------------------------------------------
 
-resource "google_compute_address" "client_address" {
-  name    = "client-address"
-  project = google_project.udp.project_id
-}
-
 resource "google_compute_instance" "client" {
 
   name         = "client-${var.tag}"
@@ -212,7 +215,7 @@ resource "google_compute_instance" "client" {
   }
 
   metadata = {
-    startup-script = <<-EOF
+    startup-script = <<-EOF2
     #!/bin/bash
     NEEDRESTART_SUSPEND=1 apt update -y
     NEEDRESTART_SUSPEND=1 apt upgrade -y
@@ -221,8 +224,16 @@ resource "google_compute_instance" "client" {
     cd /app
     gsutil cp gs://${var.google_org_id}_udp_source/source-${var.tag}.zip .
     unzip *.zip
+    export HOME=/app
     go get
+    go build client.go
+    cat <<EOF > /app/client.env
+    SERVER_ADDRESS=${google_compute_instance.server.network_interface[0].network_ip}:40000
     EOF
+    cp client.service /etc/systemd/system/client.service
+    systemctl daemon-reload
+    systemctl start client.service
+    EOF2
   }
 
   service_account {
