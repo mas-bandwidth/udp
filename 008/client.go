@@ -82,7 +82,7 @@ func runClient(clientIndex int, serverAddress *net.UDPAddr) {
 
 	addr := net.UDPAddr{
 	    Port: StartPort + clientIndex,
-	    IP:   net.ParseIP("127.0.0.1"),
+	    IP:   net.ParseIP("0.0.0.0"),
 	}
 
 	conn, err := net.ListenUDP("udp", &addr)

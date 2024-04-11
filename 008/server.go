@@ -92,7 +92,7 @@ func createServerSocket(threadIndex int) {
 		},
 	}
 
-	lp, err := lc.ListenPacket(context.Background(), "udp", "127.0.0.1:40000")
+	lp, err := lc.ListenPacket(context.Background(), "udp", "0.0.0.0:40000")
 	if err != nil {
 		panic(fmt.Sprintf("could not bind socket: %v", err))
 	}

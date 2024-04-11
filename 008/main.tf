@@ -190,6 +190,11 @@ resource "google_compute_firewall" "allow_ssh" {
 
 # ----------------------------------------------------------------------------------------
 
+resource "google_compute_address" "client_address" {
+  name    = "client-address"
+  project = google_project.udp.project_id
+}
+
 resource "google_compute_instance" "client" {
 
   name         = "client-${var.tag}"
