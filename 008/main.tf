@@ -258,6 +258,7 @@ resource "google_compute_instance" "client" {
     go get
     go build client.go
     cat <<EOF > /app/client.env
+    NUM_CLIENTS=50000
     SERVER_ADDRESS=${google_compute_instance.server.network_interface[0].network_ip}:40000
     EOF
     cp client.service /etc/systemd/system/client.service

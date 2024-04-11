@@ -13,13 +13,26 @@ import (
 )
 
 const StartPort = 10000
-const NumClients = 30000
 const MaxPacketSize = 1500
 const SocketBufferSize = 100*1024*1024
+
+var numClients int
 
 var quit uint64
 var packetsSent uint64
 var packetsReceived uint64
+
+func GetInt(name string, defaultValue int) int {
+	valueString, ok := os.LookupEnv(name)
+	if !ok {
+		return defaultValue
+	}
+	value, err := strconv.ParseInt(valueString, 10, 64)
+	if err != nil {
+		return defaultValue
+	}
+	return int(value)
+}
 
 func GetAddress(name string, defaultValue string) net.UDPAddr {
 	valueString, ok := os.LookupEnv(name)
@@ -35,9 +48,11 @@ func GetAddress(name string, defaultValue string) net.UDPAddr {
 
 func main() {
 
-	fmt.Printf("starting %d clients\n", NumClients)
-
 	serverAddress := GetAddress("SERVER_ADDRESS", "127.0.0.1:40000")
+
+	numClients = GetInt("NUM_CLIENTS", 50000)
+
+	fmt.Printf("starting %d clients\n", numClients)
 
 	fmt.Printf("server address is %s\n", serverAddress.String())
 
