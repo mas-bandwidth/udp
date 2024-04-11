@@ -16,7 +16,7 @@ import (
 )
 
 const BackendURL = "http://127.0.0.1:50000/hash"
-const NumThreads = 64
+const NumThreads = 32
 const ServerPort = 40000
 const MaxPacketSize = 1500
 const SocketBufferSize = 100*1024*1024
