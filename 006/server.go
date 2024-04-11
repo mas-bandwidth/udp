@@ -130,6 +130,7 @@ func runWorkerThread() {
 				fmt.Printf("send block\n")
 				response := PostBinary(BackendURL, block)
 				if len(response) == ResponseSize * RequestsPerBlock {
+					fmt.Printf("processing response\n")
 					responseIndex := 0
 					for i := 0; i < RequestsPerBlock; i++ {
 						ip := response[responseIndex:responseIndex+4]
@@ -139,6 +140,8 @@ func runWorkerThread() {
 						socketIndex := i % NumThreads
 						socket[socketIndex].WriteToUDP(response[responseIndex+6:responseIndex+6+8], &from)
 					}
+				} else {
+					fmt.Printf("response is wrong size (%d bytes)\n", len(response))
 				}
 			}()
 			index = 0
