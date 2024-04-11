@@ -68,6 +68,10 @@ data "local_file" "server_go" {
   filename = "server.go"
 }
 
+data "local_file" "server_service" {
+  filename = "server.service"
+}
+
 data "local_file" "backend_go" {
   filename = "backend.go"
 }
@@ -90,6 +94,10 @@ data "archive_file" "source_zip" {
   source {
     filename = "server.go"
     content  = data.local_file.server_go.content
+  }
+  source {
+    filename = "server.service"
+    content  = data.local_file.server_service.content
   }
   source {
     filename = "backend.go"
@@ -268,7 +276,7 @@ resource "google_compute_instance" "server" {
     go get
     go build server.go
     cat <<EOF > /app/server.env
-    BACKEND_ADDRESS=${google_compute_instance.backend.network_ip}:50000
+    BACKEND_ADDRESS=${google_compute_instance.backend.network_interface[0].network_ip}:50000
     EOF
     cp server.service /etc/systemd/system/server.service
     systemctl daemon-reload
