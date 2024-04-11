@@ -32,7 +32,11 @@ type Request struct {
 	from net.UDPAddr
 }
 
-var channel chan Request
+type RequestGroup struct {
+	requests [RequestsPerBlock]Request
+}
+
+var channel chan *RequestGroup
 
 var socket [NumThreads]*net.UDPConn
 
@@ -42,7 +46,7 @@ func main() {
 
     httpClient = &http.Client{Transport: &http.Transport{MaxIdleConnsPerHost: 1000}, Timeout: 1 * time.Second}
 
-    channel = make(chan Request)
+    channel = make(chan *RequestGroup)
 
 	for i := 0; i < NumThreads; i++ {
 		createServerSocket(i)
@@ -103,45 +107,57 @@ func runServerThread(threadIndex int) {
 
 	buffer := make([]byte, MaxPacketSize)
 
+	requestIndex := 0
+	requestGroup := &RequestGroup{}
+
 	for {
+		
 		packetBytes, from, err := conn.ReadFromUDP(buffer)
+		
 		if err != nil {
 			break
 		}
+		
 		if packetBytes != 100 {
 			continue
 		}
-		request := Request{data: buffer[:packetBytes], from: *from}
-		channel <- request
+		
+		requestGroup.requests[requestIndex] = Request{data: buffer[:packetBytes], from: *from}
+
+		if requestIndex == RequestsPerBlock {
+			channel <- requestGroup
+			requestGroup = &RequestGroup{}
+			requestIndex = 0
+		}
 	}	
 }
 
 func runWorkerThread() {
-	index := 0
-	block := make([]byte, BlockSize)
 	for {
-		request := <- channel
-		copy(block[index:], request.from.IP.To4())
-		binary.LittleEndian.PutUint16(block[index+4:index+6], uint16(request.from.Port))
-		copy(block[index+6:index+RequestSize], request.data)
-		index += RequestSize
-		if index == BlockSize {
-			go func() {
-				response := PostBinary(BackendURL, block)
-				if len(response) == ResponseSize * RequestsPerBlock {
-					responseIndex := 0
-					for i := 0; i < RequestsPerBlock; i++ {
-						ip := response[responseIndex:responseIndex+4]
-						port := binary.LittleEndian.Uint16(response[responseIndex+4:responseIndex+6])
-						from := net.UDPAddr{IP: ip, Port: int(port)}
-						socketIndex := i % NumThreads
-						socket[socketIndex].WriteToUDP(response[responseIndex+6:responseIndex+6+8], &from)
-						responseIndex += ResponseSize
-					}
-				}
-			}()
-			index = 0
+		requestGroup := <- channel
+		block := make([]byte, BlockSize)
+		index := 0
+		for i := 0; i < RequestsPerBlock; i++ {
+			request := &requestGroup.requests[i]
+			copy(block[index:], request.from.IP.To4())
+			binary.LittleEndian.PutUint16(block[index+4:index+6], uint16(request.from.Port))
+			copy(block[index+6:index+RequestSize], request.data)
+			index += RequestSize
 		}
+		go func() {
+			response := PostBinary(BackendURL, block)
+			if len(response) == ResponseSize * RequestsPerBlock {
+				responseIndex := 0
+				for i := 0; i < RequestsPerBlock; i++ {
+					ip := response[responseIndex:responseIndex+4]
+					port := binary.LittleEndian.Uint16(response[responseIndex+4:responseIndex+6])
+					from := net.UDPAddr{IP: ip, Port: int(port)}
+					socketIndex := i % NumThreads
+					socket[socketIndex].WriteToUDP(response[responseIndex+6:responseIndex+6+8], &from)
+					responseIndex += ResponseSize
+				}
+			}
+		}()
 	}
 }
 
