@@ -72,6 +72,10 @@ data "local_file" "backend_go" {
   filename = "backend.go"
 }
 
+data "local_file" "go_mod" {
+  filename = "go.mod"
+}
+
 data "archive_file" "source_zip" {
   type        = "zip"
   output_path = "source.zip"
@@ -86,6 +90,10 @@ data "archive_file" "source_zip" {
   source {
     filename = "backend.go"
     content  = data.local_file.backend_go.content
+  }
+  source {
+    filename = "go.mod"
+    content  = data.local_file.go_mod.content
   }
 }
 
@@ -197,6 +205,7 @@ resource "google_compute_instance" "server" {
     cd /app
     gsutil cp gs://${var.google_org_id}_udp_source/source-${var.tag}.zip .
     unzip *.zip
+    go get
     EOF
   }
 
