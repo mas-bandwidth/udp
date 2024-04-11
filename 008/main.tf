@@ -72,6 +72,10 @@ data "local_file" "backend_go" {
   filename = "backend.go"
 }
 
+data "local_file" "backend_service" {
+  filename = "backend.service"
+}
+
 data "local_file" "go_mod" {
   filename = "go.mod"
 }
@@ -90,6 +94,10 @@ data "archive_file" "source_zip" {
   source {
     filename = "backend.go"
     content  = data.local_file.backend_go.content
+  }
+  source {
+    filename = "backend.service"
+    content  = data.local_file.backend_service.content
   }
   source {
     filename = "go.mod"
@@ -308,6 +316,9 @@ resource "google_compute_instance" "backend" {
     gsutil cp gs://${var.google_org_id}_udp_source/source-${var.tag}.zip .
     unzip *.zip
     go get
+    cp backend.service /etc/systemd/system/backend.service
+    systemctl daemon-reload
+    systemctl start backend.service
     EOF
   }
 

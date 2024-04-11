@@ -1,0 +1,8 @@
+[Unit]
+Description=UDP Backend Service
+
+[Service]
+ExecStart=go run /app/backend.go
+Restart=always
+RestartSec=30
+TimeoutStopSec=90
