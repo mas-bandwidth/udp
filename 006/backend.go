@@ -40,7 +40,7 @@ func hash(w http.ResponseWriter, req *http.Request) {
 		hash := fnv.New64a()
 		hash.Write(request)
 		data := hash.Sum64()
-		binary.LittleEndian.PutUint64(response[responseIndex:responseIndex+8], data)
+		binary.LittleEndian.PutUint64(response[responseIndex+6:responseIndex+6+8], data)
 		requestIndex += RequestSize
 		responseIndex += ResponseSize
 	}
