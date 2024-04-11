@@ -15,7 +15,6 @@ import (
 	"golang.org/x/sys/unix"
 )
 
-const BackendURL = "http://127.0.0.1:50000/hash"
 const NumThreads = 64
 const ServerPort = 40000
 const MaxPacketSize = 1500
@@ -38,14 +37,16 @@ var channel chan *RequestGroup
 
 var socket [NumThreads]*net.UDPConn
 
-func GetAddress(name string, defaultValue net.UDPAddr) net.UDPAddr {
+var backendAddress net.UDPAddr
+
+func GetAddress(name string, defaultValue string) net.UDPAddr {
 	valueString, ok := os.LookupEnv(name)
 	if !ok {
-		return defaultValue
+	    valueString = defaultValue
 	}
 	value, err := net.ResolveUDPAddr("udp", valueString)
 	if err != nil {
-		return defaultValue
+		panic(fmt.Sprintf("invalid address in envvar %s", name))
 	}
 	return *value
 }
@@ -53,6 +54,8 @@ func GetAddress(name string, defaultValue net.UDPAddr) net.UDPAddr {
 func main() {
 
 	fmt.Printf("starting %d server threads on port %d\n", NumThreads, ServerPort)
+
+	backendAddress = GetAddress("BACKEND_ADDRESS", "127.0.0.1:50000")
 
     channel = make(chan *RequestGroup)
 
@@ -143,6 +146,7 @@ func runServerThread(threadIndex int) {
 }
 
 func runWorkerThread() {
+	backendURL := fmt.Sprintf("http://%s/hash", backendAddress)
     httpClient := &http.Client{Transport: &http.Transport{MaxIdleConnsPerHost: 1000}, Timeout: 1 * time.Second}
 	for {
 		requestGroup := <- channel
@@ -156,7 +160,7 @@ func runWorkerThread() {
 			index += RequestSize
 		}
 		go func() {
-			response := PostBinary(httpClient, BackendURL, block)
+			response := PostBinary(httpClient, backendURL, block)
 			if len(response) == ResponseSize * RequestsPerBlock {
 				responseIndex := 0
 				for i := 0; i < RequestsPerBlock; i++ {

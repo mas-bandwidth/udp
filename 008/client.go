@@ -8,7 +8,6 @@ import (
 	"os"
 	"os/signal"
 	"syscall"
-	"strconv"
 	"sync/atomic"
 	"math/rand"
 )
@@ -22,24 +21,23 @@ var quit uint64
 var packetsSent uint64
 var packetsReceived uint64
 
-func ParseAddress(input string) net.UDPAddr {
-	address := net.UDPAddr{}
-	ip_string, port_string, err := net.SplitHostPort(input)
-	if err != nil {
-		address.IP = net.ParseIP(input)
-		address.Port = 0
-		return address
+func GetAddress(name string, defaultValue string) net.UDPAddr {
+	valueString, ok := os.LookupEnv(name)
+	if !ok {
+	    valueString = defaultValue
 	}
-	address.IP = net.ParseIP(ip_string)
-	address.Port, _ = strconv.Atoi(port_string)
-	return address
+	value, err := net.ResolveUDPAddr("udp", valueString)
+	if err != nil {
+		panic(fmt.Sprintf("invalid address in envvar %s", name))
+	}
+	return *value
 }
 
 func main() {
 
 	fmt.Printf("starting %d clients\n", NumClients)
 
-	serverAddress := ParseAddress("127.0.0.1:40000")
+	serverAddress := GetAddress("SERVER_ADDRESS", "127.0.0.1:40000")
 
 	var wg sync.WaitGroup
 

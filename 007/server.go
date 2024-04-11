@@ -38,18 +38,6 @@ var channel chan *RequestGroup
 
 var socket [NumThreads]*net.UDPConn
 
-func GetAddress(name string, defaultValue net.UDPAddr) net.UDPAddr {
-	valueString, ok := os.LookupEnv(name)
-	if !ok {
-		return defaultValue
-	}
-	value, err := net.ResolveUDPAddr("udp", valueString)
-	if err != nil {
-		return defaultValue
-	}
-	return *value
-}
-
 func main() {
 
 	fmt.Printf("starting %d server threads on port %d\n", NumThreads, ServerPort)
