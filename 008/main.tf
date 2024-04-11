@@ -267,6 +267,9 @@ resource "google_compute_instance" "server" {
     export HOME=/app
     go get
     go build server.go
+    cat <<EOF > /app/server.env
+    BACKEND_ADDRESS=${google_compute_instance.backend.network_ip}:50000
+    EOF
     cp server.service /etc/systemd/system/server.service
     systemctl daemon-reload
     systemctl start server.service
