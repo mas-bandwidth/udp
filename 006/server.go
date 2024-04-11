@@ -139,6 +139,8 @@ func runWorkerThread() {
 						responseIndex += ResponseSize
 						socketIndex := i % NumThreads
 						socket[socketIndex].WriteToUDP(response[responseIndex+6:responseIndex+6+8], &from)
+						// todo
+						fmt.Printf("send response to %s\n", from.String())
 					}
 				} else {
 					fmt.Printf("response is wrong size (%d bytes)\n", len(response))
