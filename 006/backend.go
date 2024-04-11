@@ -34,7 +34,7 @@ func hash(w http.ResponseWriter, req *http.Request) {
 	}
 	requestIndex := 0
 	responseIndex := 0
-	response := [ResponseSize*RequestPerBlock]byte{}
+	response := [ResponseSize*RequestsPerBlock]byte{}
 	for i := 0; i < RequestsPerBlock; i++ {
 		copy(response[responseIndex:responseIndex+6], request[requestIndex:requestIndex+6])
 		hash := fnv.New64a()
