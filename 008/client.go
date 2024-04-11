@@ -8,6 +8,7 @@ import (
 	"os"
 	"os/signal"
 	"syscall"
+	"strconv"
 	"sync/atomic"
 	"math/rand"
 )
@@ -58,7 +59,7 @@ func main() {
 
 	var wg sync.WaitGroup
 
-	for i := 0; i < NumClients; i++ {
+	for i := 0; i < numClients; i++ {
 		go func(clientIndex int) {
 			wg.Add(1)
 			runClient(clientIndex, &serverAddress)

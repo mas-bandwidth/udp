@@ -163,8 +163,6 @@ func runWorkerThread() {
 			index += RequestSize
 		}
 		go func() {
-			// todo
-			fmt.Printf("sent batch\n")
 			response := PostBinary(httpClient, backendURL, block)
 			if len(response) == ResponseSize * RequestsPerBlock {
 				responseIndex := 0
