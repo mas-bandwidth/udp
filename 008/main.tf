@@ -188,6 +188,18 @@ resource "google_compute_firewall" "allow_ssh" {
   target_tags = ["allow-ssh"]
 }
 
+resource "google_compute_firewall" "allow_udp" {
+  name          = "allow-udp"
+  project       = local.google_project_id
+  direction     = "INGRESS"
+  network       = google_compute_network.development.id
+  source_ranges = ["0.0.0.0/0"]
+  allow {
+    protocol = "udp"
+  }
+  target_tags = ["allow-udp"]
+}
+
 # ----------------------------------------------------------------------------------------
 
 resource "google_compute_address" "client_address" {
@@ -201,7 +213,7 @@ resource "google_compute_instance" "client" {
   project      = google_project.udp.project_id
   machine_type = "n1-standard-8"
   zone         = var.google_zone
-  tags         = ["allow-ssh"]
+  tags         = ["allow-ssh", "allow-udp"]
 
   allow_stopping_for_update = true
 
@@ -260,7 +272,7 @@ resource "google_compute_instance" "server" {
   project      = google_project.udp.project_id
   machine_type = "n1-standard-8"
   zone         = var.google_zone
-  tags         = ["allow-ssh"]
+  tags         = ["allow-ssh", "allow-udp"]
 
   allow_stopping_for_update = true
 
@@ -319,7 +331,7 @@ resource "google_compute_instance" "backend" {
   project      = google_project.udp.project_id
   machine_type = "n1-standard-8"
   zone         = var.google_zone
-  tags         = ["allow-ssh"]
+  tags         = ["allow-ssh", "allow-udp"]
 
   allow_stopping_for_update = true
 
