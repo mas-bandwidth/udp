@@ -22,3 +22,4 @@ go.work
 
 # grrr
 .DS_Store
+go.mod
