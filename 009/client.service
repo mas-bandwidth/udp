@@ -1,0 +1,9 @@
+[Unit]
+Description=UDP Client Service
+
+[Service]
+ExecStart=/app/client
+EnvironmentFile=/app/client.env
+Restart=always
+RestartSec=30
+TimeoutStopSec=90
