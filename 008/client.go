@@ -50,7 +50,7 @@ func main() {
 
 	serverAddress := GetAddress("SERVER_ADDRESS", "127.0.0.1:40000")
 
-	numClients = GetInt("NUM_CLIENTS", 50000)
+	numClients = GetInt("NUM_CLIENTS", 30000)
 
 	fmt.Printf("starting %d clients\n", numClients)
 
