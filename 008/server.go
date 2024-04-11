@@ -25,8 +25,6 @@ const RequestSize = 4 + 2 + 100
 const BlockSize = RequestsPerBlock * RequestSize
 const ResponseSize = 4 + 2 + 8
 
-var httpClient *http.Client
-
 type Request struct {
 	data []byte
 	from net.UDPAddr
@@ -40,11 +38,21 @@ var channel chan *RequestGroup
 
 var socket [NumThreads]*net.UDPConn
 
+func GetAddress(name string, defaultValue net.UDPAddr) net.UDPAddr {
+	valueString, ok := os.LookupEnv(name)
+	if !ok {
+		return defaultValue
+	}
+	value, err := net.ResolveUDPAddr("udp", valueString)
+	if err != nil {
+		return defaultValue
+	}
+	return *value
+}
+
 func main() {
 
 	fmt.Printf("starting %d server threads on port %d\n", NumThreads, ServerPort)
-
-    httpClient = &http.Client{Transport: &http.Transport{MaxIdleConnsPerHost: 1000}, Timeout: 1 * time.Second}
 
     channel = make(chan *RequestGroup)
 
@@ -135,6 +143,7 @@ func runServerThread(threadIndex int) {
 }
 
 func runWorkerThread() {
+    httpClient := &http.Client{Transport: &http.Transport{MaxIdleConnsPerHost: 1000}, Timeout: 1 * time.Second}
 	for {
 		requestGroup := <- channel
 		block := make([]byte, BlockSize)
@@ -147,7 +156,7 @@ func runWorkerThread() {
 			index += RequestSize
 		}
 		go func() {
-			response := PostBinary(BackendURL, block)
+			response := PostBinary(httpClient, BackendURL, block)
 			if len(response) == ResponseSize * RequestsPerBlock {
 				responseIndex := 0
 				for i := 0; i < RequestsPerBlock; i++ {
@@ -163,11 +172,11 @@ func runWorkerThread() {
 	}
 }
 
-func PostBinary(url string, data []byte) []byte {
+func PostBinary(client *http.Client, url string, data []byte) []byte {
 	buffer := bytes.NewBuffer(data)
 	request, _ := http.NewRequest("POST", url, buffer)
 	request.Header.Add("Content-Type", "application/octet-stream")
-	response, err := httpClient.Do(request)
+	response, err := client.Do(request)
 	if err != nil {
 		return nil
 	}

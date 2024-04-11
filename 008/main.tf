@@ -166,6 +166,57 @@ resource "google_compute_firewall" "allow_ssh" {
 
 # ----------------------------------------------------------------------------------------
 
+resource "google_compute_address" "client_address" {
+  name    = "client-address"
+  project = google_project.udp.project_id
+}
+
+resource "google_compute_instance" "client" {
+
+  name         = "client-${var.tag}"
+  project      = google_project.udp.project_id
+  machine_type = "n1-standard-8"
+  zone         = var.google_zone
+  tags         = ["allow-ssh"]
+
+  allow_stopping_for_update = true
+
+  boot_disk {
+    initialize_params {
+      image = "ubuntu-os-cloud/ubuntu-minimal-2204-lts"
+    }
+  }
+
+  network_interface {
+    network    = google_compute_network.udp.id
+    subnetwork = google_compute_subnetwork.udp.id
+    access_config {
+      nat_ip = google_compute_address.client_address.address
+    }
+  }
+
+  metadata = {
+    startup-script = <<-EOF
+    #!/bin/bash
+    NEEDRESTART_SUSPEND=1 apt update -y
+    NEEDRESTART_SUSPEND=1 apt upgrade -y
+    NEEDRESTART_SUSPEND=1 apt install golang-go unzip -y
+    mkdir /app
+    cd /app
+    gsutil cp gs://${var.google_org_id}_udp_source/source-${var.tag}.zip .
+    unzip *.zip
+    go get
+    EOF
+  }
+
+  service_account {
+    email  = google_service_account.udp_runtime.email
+    scopes = ["cloud-platform"]
+  }
+}
+
+# ----------------------------------------------------------------------------------------
+
 resource "google_compute_address" "server_address" {
   name    = "server-address"
   project = google_project.udp.project_id
@@ -192,6 +243,57 @@ resource "google_compute_instance" "server" {
     subnetwork = google_compute_subnetwork.udp.id
     access_config {
       nat_ip = google_compute_address.server_address.address
+    }
+  }
+
+  metadata = {
+    startup-script = <<-EOF
+    #!/bin/bash
+    NEEDRESTART_SUSPEND=1 apt update -y
+    NEEDRESTART_SUSPEND=1 apt upgrade -y
+    NEEDRESTART_SUSPEND=1 apt install golang-go unzip -y
+    mkdir /app
+    cd /app
+    gsutil cp gs://${var.google_org_id}_udp_source/source-${var.tag}.zip .
+    unzip *.zip
+    go get
+    EOF
+  }
+
+  service_account {
+    email  = google_service_account.udp_runtime.email
+    scopes = ["cloud-platform"]
+  }
+}
+
+# ----------------------------------------------------------------------------------------
+
+resource "google_compute_address" "backend_address" {
+  name    = "backend-address"
+  project = google_project.udp.project_id
+}
+
+resource "google_compute_instance" "backend" {
+
+  name         = "backend-${var.tag}"
+  project      = google_project.udp.project_id
+  machine_type = "n1-standard-8"
+  zone         = var.google_zone
+  tags         = ["allow-ssh"]
+
+  allow_stopping_for_update = true
+
+  boot_disk {
+    initialize_params {
+      image = "ubuntu-os-cloud/ubuntu-minimal-2204-lts"
+    }
+  }
+
+  network_interface {
+    network    = google_compute_network.udp.id
+    subnetwork = google_compute_subnetwork.udp.id
+    access_config {
+      nat_ip = google_compute_address.backend_address.address
     }
   }
 

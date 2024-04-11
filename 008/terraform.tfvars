@@ -6,4 +6,4 @@ google_region               = "us-central1"
 google_zone                 = "us-central1-a"
 google_zones                = ["us-central1-a", "us-central1-b", "us-central1-c"]
 
-tag                         = "004" # change this each time you want to recreate the VMs
+tag                         = "005" # change this each time you want to recreate the VMs
