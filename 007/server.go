@@ -124,6 +124,8 @@ func runServerThread(threadIndex int) {
 		
 		requestGroup.requests[requestIndex] = Request{data: buffer[:packetBytes], from: *from}
 
+		requestIndex++
+
 		if requestIndex == RequestsPerBlock {
 			channel <- requestGroup
 			requestGroup = &RequestGroup{}
