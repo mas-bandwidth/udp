@@ -39,6 +39,8 @@ func main() {
 
 	serverAddress := GetAddress("SERVER_ADDRESS", "127.0.0.1:40000")
 
+	fmt.Printf("server address is %s\n", serverAddress.String())
+
 	var wg sync.WaitGroup
 
 	for i := 0; i < NumClients; i++ {

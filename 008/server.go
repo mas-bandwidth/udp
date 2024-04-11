@@ -57,6 +57,8 @@ func main() {
 
 	backendAddress = GetAddress("BACKEND_ADDRESS", "127.0.0.1:50000")
 
+	fmt.Printf("backend address is %s\n", backendAddress.String())
+
     channel = make(chan *RequestGroup)
 
 	for i := 0; i < NumThreads; i++ {
@@ -146,7 +148,8 @@ func runServerThread(threadIndex int) {
 }
 
 func runWorkerThread() {
-	backendURL := fmt.Sprintf("http://%s/hash", backendAddress)
+	backendURL := fmt.Sprintf("http://%s/hash", backendAddress.String())
+	fmt.Printf("backend url is %s\n", backendURL)
     httpClient := &http.Client{Transport: &http.Transport{MaxIdleConnsPerHost: 1000}, Timeout: 1 * time.Second}
 	for {
 		requestGroup := <- channel
