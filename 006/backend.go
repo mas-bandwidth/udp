@@ -28,6 +28,7 @@ func main() {
 func hash(w http.ResponseWriter, req *http.Request) {
 	request, err := io.ReadAll(req.Body)
 	if err != nil || len(request) != BlockSize {
+		fmt.Printf("not block size\n")
 		w.WriteHeader(http.StatusBadRequest)
 		return
 	}
