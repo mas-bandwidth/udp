@@ -316,6 +316,7 @@ resource "google_compute_instance" "backend" {
     gsutil cp gs://${var.google_org_id}_udp_source/source-${var.tag}.zip .
     unzip *.zip
     go get
+    go build backend.go
     cp backend.service /etc/systemd/system/backend.service
     systemctl daemon-reload
     systemctl start backend.service

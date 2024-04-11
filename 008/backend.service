@@ -2,7 +2,7 @@
 Description=UDP Backend Service
 
 [Service]
-ExecStart=go run /app/backend.go
+ExecStart=/app/backend
 Restart=always
 RestartSec=30
 TimeoutStopSec=90
