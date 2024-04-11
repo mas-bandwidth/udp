@@ -10,7 +10,7 @@ import (
 )
 
 const BackendPort = 50000
-const RequestsPerBlock = 1000
+const RequestsPerBlock = 200
 const RequestSize = 4 + 2 + 100
 const ResponseSize = 4 + 2 + 8
 const BlockSize = RequestsPerBlock * RequestSize
