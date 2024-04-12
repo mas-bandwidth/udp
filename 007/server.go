@@ -16,10 +16,11 @@ import (
 )
 
 const BackendURL = "http://127.0.0.1:50000/hash"
-const NumThreads = 64
+const NumServerThreads = 64
+const NumWorkerThreads = 64
 const ServerPort = 40000
 const MaxPacketSize = 1500
-const SocketBufferSize = 100*1024*1024
+const SocketBufferSize = 1024*1024*1024
 const RequestsPerBlock = 100
 const RequestSize = 4 + 2 + 100
 const BlockSize = RequestsPerBlock * RequestSize
@@ -34,29 +35,33 @@ type RequestGroup struct {
 	requests [RequestsPerBlock]Request
 }
 
-var channel chan *RequestGroup
+var channel [NumWorkerThreads]chan *RequestGroup
 
-var socket [NumThreads]*net.UDPConn
+var socket [NumServerThreads]*net.UDPConn
 
 func main() {
 
-	fmt.Printf("starting %d server threads on port %d\n", NumThreads, ServerPort)
+	fmt.Printf("starting %d server threads on port %d with %d worker threads\n", NumServerThreads, ServerPort, NumWorkerThreads)
 
-    channel = make(chan *RequestGroup)
+	for i := 0; i < NumWorkerThreads; i++ {
+	    channel[i] = make(chan *RequestGroup)
+	}
 
-	for i := 0; i < NumThreads; i++ {
+	for i := 0; i < NumServerThreads; i++ {
 		createServerSocket(i)
 	}
 
-	for i := 0; i < NumThreads; i++ {
+	for i := 0; i < NumServerThreads; i++ {
 		go func(threadIndex int) {
 			runServerThread(threadIndex)
 		}(i)
 	}
 
-	go func() {
-		runWorkerThread()
-	}()
+	for i := 0; i < NumWorkerThreads; i++ {
+		go func(workerIndex int) {
+			runWorkerThread()
+		}(i)
+	}
 
 	termChan := make(chan os.Signal, 1)
 	signal.Notify(termChan, os.Interrupt, syscall.SIGTERM)
@@ -64,7 +69,6 @@ func main() {
 }
 
 func createServerSocket(threadIndex int) {
-
 	lc := net.ListenConfig{
 		Control: func(network string, address string, c syscall.RawConn) error {
 			err := c.Control(func(fileDescriptor uintptr) {
@@ -76,61 +80,47 @@ func createServerSocket(threadIndex int) {
 			return err
 		},
 	}
-
 	lp, err := lc.ListenPacket(context.Background(), "udp", "127.0.0.1:40000")
 	if err != nil {
 		panic(fmt.Sprintf("could not bind socket: %v", err))
 	}
-
 	conn := lp.(*net.UDPConn)
-
 	socket[threadIndex] = conn
 }
 
 func runServerThread(threadIndex int) {
-
 	conn := socket[threadIndex]
-
 	defer conn.Close()
-
 	if err := conn.SetReadBuffer(SocketBufferSize); err != nil {
 		panic(fmt.Sprintf("could not set socket read buffer size: %v", err))
 	}
-
 	if err := conn.SetWriteBuffer(SocketBufferSize); err != nil {
 		panic(fmt.Sprintf("could not set socket write buffer size: %v", err))
 	}
-
 	buffer := make([]byte, MaxPacketSize)
-
 	requestIndex := 0
 	requestGroup := &RequestGroup{}
-
+	channelIndex := threadIndex % NumWorkerThreads
 	for {
-		
 		packetBytes, from, err := conn.ReadFromUDP(buffer)
-		
 		if err != nil {
 			break
 		}
-		
 		if packetBytes != 100 {
 			continue
 		}
-		
 		requestGroup.requests[requestIndex] = Request{data: buffer[:packetBytes], from: *from}
-
 		requestIndex++
-
 		if requestIndex == RequestsPerBlock {
-			channel <- requestGroup
+
+			channel[channelIndex] <- requestGroup
 			requestGroup = &RequestGroup{}
 			requestIndex = 0
 		}
 	}	
 }
 
-func runWorkerThread() {
+func runWorkerThread(workerIndex int) {
     httpClient := &http.Client{Transport: &http.Transport{MaxIdleConnsPerHost: 1000}, Timeout: 1 * time.Second}
 	for {
 		requestGroup := <- channel
@@ -151,7 +141,7 @@ func runWorkerThread() {
 					ip := response[responseIndex:responseIndex+4]
 					port := binary.LittleEndian.Uint16(response[responseIndex+4:responseIndex+6])
 					from := net.UDPAddr{IP: ip, Port: int(port)}
-					socketIndex := i % NumThreads
+					socketIndex := i % NumServerThreads
 					socket[socketIndex].WriteToUDP(response[responseIndex+6:responseIndex+6+8], &from)
 					responseIndex += ResponseSize
 				}
