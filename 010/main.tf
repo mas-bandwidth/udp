@@ -237,7 +237,7 @@ resource "google_compute_instance_template" "client" {
 
   project      = google_project.udp.project_id
 
-  machine_type = "n1-standard-8"
+  machine_type = "n1-standard-16"
 
   network_interface {
     network    = google_compute_network.udp.id
@@ -378,7 +378,7 @@ resource "google_compute_instance" "backend" {
 
   name         = "backend-${var.tag}"
   project      = google_project.udp.project_id
-  machine_type = "c3-highcpu-176"
+  machine_type = "c3-highcpu-44"
   zone         = var.google_zone
   tags         = ["allow-ssh", "allow-http"]
 

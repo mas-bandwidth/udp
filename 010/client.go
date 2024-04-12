@@ -86,7 +86,7 @@ func main() {
 	 		received := atomic.LoadUint64(&packetsReceived)
 	 		sent_delta := sent - prev_sent
 	 		received_delta := received - prev_received
-	 		fmt.Printf("sent delta %d, received delta %d (%.1f%%)\n", sent, received, sent_delta, received_delta, float64(received_delta)/float64(sent_delta)*100.0)
+	 		fmt.Printf("sent delta %d, received delta %d (%.1f%%)\n", sent_delta, received_delta, float64(received_delta)/float64(sent_delta)*100.0)
 			prev_sent = sent
 			prev_received = received
 	 	}

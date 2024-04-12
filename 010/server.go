@@ -15,17 +15,17 @@ import (
 	"golang.org/x/sys/unix"
 )
 
-const NumThreads = 64
+const NumThreads = 32
 const ServerPort = 40000
 const MaxPacketSize = 1500
-const SocketBufferSize = 100*1024*1024
+const SocketBufferSize = 1024*1024*1024
 const RequestsPerBlock = 100
 const RequestSize = 4 + 2 + 100
 const BlockSize = RequestsPerBlock * RequestSize
 const ResponseSize = 4 + 2 + 8
 
 type Request struct {
-	data []byte
+	data [100]byte
 	from net.UDPAddr
 }
 
@@ -122,15 +122,12 @@ func runServerThread(threadIndex int) {
 		panic(fmt.Sprintf("could not set socket write buffer size: %v", err))
 	}
 
-	buffer := make([]byte, MaxPacketSize)
-
 	requestIndex := 0
 	requestGroup := &RequestGroup{}
 
 	for {
-		
-		packetBytes, from, err := conn.ReadFromUDP(buffer)
-		
+
+		packetBytes, from, err := conn.ReadFromUDP(requestGroup.requests[requestIndex].data[:])
 		if err != nil {
 			break
 		}
@@ -138,9 +135,9 @@ func runServerThread(threadIndex int) {
 		if packetBytes != 100 {
 			continue
 		}
-		
-		requestGroup.requests[requestIndex] = Request{data: buffer[:packetBytes], from: *from}
 
+		requestGroup.requests[requestIndex].from = *from
+		
 		requestIndex++
 
 		if requestIndex == RequestsPerBlock {
@@ -163,7 +160,7 @@ func runWorkerThread(threadIndex int) {
 			request := &requestGroup.requests[i]
 			copy(block[index:], request.from.IP.To4())
 			binary.LittleEndian.PutUint16(block[index+4:index+6], uint16(request.from.Port))
-			copy(block[index+6:index+RequestSize], request.data)
+			copy(block[index+6:index+RequestSize], request.data[:])
 			index += RequestSize
 		}
 		go func() {
