@@ -175,6 +175,22 @@ resource "google_compute_subnetwork" "udp" {
   private_ip_google_access = true
 }
 
+resource "google_compute_router" "router" {
+  name    = "router-to-internet"
+  network = google_compute_network.udp.id
+  project = google_project.udp.project_id
+  region  = var.google_region
+}
+
+resource "google_compute_router_nat" "nat" {
+  name                               = "nat"
+  project                            = google_project.udp.project_id
+  router                             = google_compute_router.router.name
+  region                             = var.google_region
+  nat_ip_allocate_option             = "AUTO_ONLY"
+  source_subnetwork_ip_ranges_to_nat = "ALL_SUBNETWORKS_ALL_IP_RANGES"
+}
+
 resource "google_compute_firewall" "allow_ssh" {
   name          = "allow-ssh"
   project       = google_project.udp.project_id
@@ -221,7 +237,7 @@ resource "google_compute_instance_template" "client" {
 
   project      = google_project.udp.project_id
 
-  machine_type = "n1-standard-4"
+  machine_type = "n1-standard-8"
 
   network_interface {
     network    = google_compute_network.udp.id
@@ -252,7 +268,7 @@ resource "google_compute_instance_template" "client" {
     go get
     go build client.go
     cat <<EOF > /app/client.env
-    NUM_CLIENTS=50000
+    NUM_CLIENTS=1000
     SERVER_ADDRESS=${google_compute_instance.server.network_interface[0].network_ip}:40000
     EOF
     cp client.service /etc/systemd/system/client.service
@@ -265,14 +281,10 @@ resource "google_compute_instance_template" "client" {
     email  = google_service_account.udp_runtime.email
     scopes = ["cloud-platform"]
   }
-
-  lifecycle {
-    create_before_destroy = true
-  }
 }
 
 resource "google_compute_region_instance_group_manager" "client" {
-  target_size               = 20
+  target_size               = 10
   name                      = "client"
   project                   = google_project.udp.project_id
   region                    = var.google_region
@@ -358,7 +370,7 @@ resource "google_compute_instance" "server" {
 # ----------------------------------------------------------------------------------------
 
 resource "google_compute_address" "backend_address" {
-  name    = "backend-address"
+  name    = "backend-${var.tag}-address"
   project = google_project.udp.project_id
 }
 
