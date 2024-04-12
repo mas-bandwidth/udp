@@ -123,10 +123,10 @@ func runServerThread(threadIndex int) {
 		copy(block[index:], from.IP.To4())
 
 		binary.LittleEndian.PutUint16(block[index+4:index+6], uint16(from.Port))
-
+		
 		if index == BlockSize {
-			go func() {
-				response := PostBinary(httpClient, backendURL, block)
+			go func(request []byte) {
+				response := PostBinary(httpClient, backendURL, request)
 				if len(response) == ResponseSize * RequestsPerBlock {
 					responseIndex := 0
 					for i := 0; i < RequestsPerBlock; i++ {
@@ -137,7 +137,7 @@ func runServerThread(threadIndex int) {
 						responseIndex += ResponseSize
 					}
 				}
-			}()
+			}(block)
 			block = make([]byte, BlockSize)
 			index = 0
 		} else {
