@@ -1,0 +1,8 @@
+[Unit]
+Description=UDP Backend Service
+
+[Service]
+ExecStart=/app/backend
+Restart=always
+RestartSec=30
+TimeoutStopSec=90
