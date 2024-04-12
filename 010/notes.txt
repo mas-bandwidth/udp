@@ -1,0 +1,7 @@
+10k clients = ~50% of c3-highcpu-176 server, ~50% c3-highcpu-44 backend.
+
+10k clients -> 10*1000*100 packets per-second = 1M pps
+
+10k clients -> 10*1000*100*100 bytes per-second = 10,000,000 -> 10M bytes per-sec, 80M bits per-sec, 80mbps. This is very low.
+
+n1-standard-16 can send around 100k packets per-second. seems quite low, most likely it's scheduling issues with the sleeps being so tight on 10ms.

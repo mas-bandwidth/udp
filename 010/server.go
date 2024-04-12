@@ -8,18 +8,17 @@ import (
 	"os"
 	"os/signal"
 	"syscall"
-	"time"
+	// "time"
 	"bytes"
 	"net/http"
-	"encoding/binary"
+	// "encoding/binary"
 	"golang.org/x/sys/unix"
 )
 
-const NumThreads = 32
+const NumThreads = 64
 const ServerPort = 40000
-const MaxPacketSize = 1500
-const SocketBufferSize = 1024*1024*1024
-const RequestsPerBlock = 1000
+const SocketBufferSize = 256*1024*1024
+const RequestsPerBlock = 100
 const RequestSize = 4 + 2 + 100
 const BlockSize = RequestsPerBlock * RequestSize
 const ResponseSize = 4 + 2 + 8
@@ -89,9 +88,11 @@ func createServerSocket(threadIndex int) {
 
 func runServerThread(threadIndex int) {
 
+	/*
 	backendURL := fmt.Sprintf("http://%s/hash", backendAddress.String())
 
     httpClient := &http.Client{Transport: &http.Transport{MaxIdleConnsPerHost: 1000}, Timeout: 1 * time.Second}
+    */
 
 	conn := socket[threadIndex]
 
@@ -105,25 +106,13 @@ func runServerThread(threadIndex int) {
 		panic(fmt.Sprintf("could not set socket write buffer size: %v", err))
 	}
 
+
 	index := 0
 	block := make([]byte, BlockSize)
-	packetData := make([]byte, 1024)
 
 	for {
 
-		packetBytes, from, err := conn.ReadFromUDP(packetData)
-		if err != nil {
-			break
-		}
-		
-		if packetBytes != 100 {
-			continue
-		}
-
-		copy(block[index:], from.IP.To4())
-		binary.LittleEndian.PutUint16(block[index+4:index+6], uint16(from.Port))
-		copy(block[index:], packetData[:packetBytes])
-		
+		/*
 		if index == BlockSize {
 			go func(request []byte) {
 				response := PostBinary(httpClient, backendURL, request)
@@ -140,9 +129,29 @@ func runServerThread(threadIndex int) {
 			}(block)
 			block = make([]byte, BlockSize)
 			index = 0
-		} else {
-			index += RequestSize
 		}
+		*/
+
+		packetBytes, from, err := conn.ReadFromUDP(block[index+6:index+6+100])
+		if err != nil {
+			break
+		}
+		
+		if packetBytes != 100 {
+			continue
+		}
+
+		// todo
+		var dummy [8]byte
+		socket[threadIndex].WriteToUDP(dummy[:], from)
+
+		/*
+		copy(block[index:], from.IP.To4())
+
+		binary.LittleEndian.PutUint16(block[index+4:index+6], uint16(from.Port))
+		
+		index += RequestSize
+		*/
 	}	
 }
 

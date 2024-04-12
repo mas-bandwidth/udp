@@ -90,7 +90,7 @@ data "local_file" "go_mod" {
 
 data "archive_file" "source_zip" {
   type        = "zip"
-  output_path = "source.zip"
+  output_path = "source-${var.tag}.zip"
   source {
     filename = "client.go"
     content  = data.local_file.client_go.content
@@ -132,7 +132,7 @@ resource "google_storage_bucket" "source" {
 
 resource "google_storage_bucket_object" "source_zip" {
   name         = "source-${var.tag}.zip"
-  source       = "source.zip"
+  source       = "source-${var.tag}.zip"
   content_type = "application/zip"
   bucket       = google_storage_bucket.source.id
 }
@@ -297,7 +297,7 @@ resource "google_compute_region_instance_group_manager" "client" {
     instance_template       = google_compute_instance_template.client.id
     name                    = "primary"
   }
-  base_instance_name        = "client-${var.tag}"
+  base_instance_name        = "client"
   update_policy {
     type                           = "PROACTIVE"
     minimal_action                 = "REPLACE"
