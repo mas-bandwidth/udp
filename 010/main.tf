@@ -295,7 +295,7 @@ resource "google_compute_region_instance_group_manager" "client" {
 # ----------------------------------------------------------------------------------------
 
 resource "google_compute_address" "server_address" {
-  name    = "server-address"
+  name    = "server-${var.tag}-address"
   project = google_project.udp.project_id
 }
 
