@@ -297,7 +297,7 @@ resource "google_compute_region_instance_group_manager" "client" {
     instance_template       = google_compute_instance_template.client.id
     name                    = "primary"
   }
-  base_instance_name        = "client"
+  base_instance_name        = "client-${var.tag}"
   update_policy {
     type                           = "PROACTIVE"
     minimal_action                 = "REPLACE"

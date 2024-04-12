@@ -106,12 +106,12 @@ func runServerThread(threadIndex int) {
 	}
 
 	index := 0
-
 	block := make([]byte, BlockSize)
+	packetData := make([]byte, 1024)
 
 	for {
 
-		packetBytes, from, err := conn.ReadFromUDP(block[index+6:index+6+100])
+		packetBytes, from, err := conn.ReadFromUDP(packetData)
 		if err != nil {
 			break
 		}
@@ -121,8 +121,8 @@ func runServerThread(threadIndex int) {
 		}
 
 		copy(block[index:], from.IP.To4())
-
 		binary.LittleEndian.PutUint16(block[index+4:index+6], uint16(from.Port))
+		copy(block[index:], packetData[:packetBytes])
 		
 		if index == BlockSize {
 			go func(request []byte) {
