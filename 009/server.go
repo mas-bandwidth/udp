@@ -149,7 +149,6 @@ func runServerThread(threadIndex int) {
 
 func runWorkerThread() {
 	backendURL := fmt.Sprintf("http://%s/hash", backendAddress.String())
-	fmt.Printf("backend url is %s\n", backendURL)
     httpClient := &http.Client{Transport: &http.Transport{MaxIdleConnsPerHost: 1000}, Timeout: 1 * time.Second}
 	for {
 		requestGroup := <- channel

@@ -6,9 +6,9 @@ import (
 	"context"
 	"io"
 	"os"
-	"time"
 	"os/signal"
 	"syscall"
+	"time"
 	"bytes"
 	"net/http"
 	"encoding/binary"
@@ -24,18 +24,7 @@ const RequestSize = 4 + 2 + 100
 const BlockSize = RequestsPerBlock * RequestSize
 const ResponseSize = 4 + 2 + 8
 
-type Request struct {
-	data [100]byte
-	from net.UDPAddr
-}
-
-type RequestGroup struct {
-	requests [RequestsPerBlock]Request
-}
-
 var socket [NumThreads]*net.UDPConn
-
-var channel [NumThreads]chan *RequestGroup
 
 var backendAddress net.UDPAddr
 
@@ -60,22 +49,12 @@ func main() {
 	fmt.Printf("backend address is %s\n", backendAddress.String())
 
 	for i := 0; i < NumThreads; i++ {
-	    channel[i] = make(chan *RequestGroup)
-	}
-
-	for i := 0; i < NumThreads; i++ {
 		createServerSocket(i)
 	}
 
 	for i := 0; i < NumThreads; i++ {
 		go func(threadIndex int) {
 			runServerThread(threadIndex)
-		}(i)
-	}
-
-	for i := 0; i < NumThreads; i++ {
-		go func(threadIndex int) {
-			runWorkerThread(threadIndex)
 		}(i)
 	}
 
@@ -110,6 +89,10 @@ func createServerSocket(threadIndex int) {
 
 func runServerThread(threadIndex int) {
 
+	backendURL := fmt.Sprintf("http://%s/hash", backendAddress.String())
+
+    httpClient := &http.Client{Transport: &http.Transport{MaxIdleConnsPerHost: 1000}, Timeout: 1 * time.Second}
+
 	conn := socket[threadIndex]
 
 	defer conn.Close()
@@ -122,12 +105,13 @@ func runServerThread(threadIndex int) {
 		panic(fmt.Sprintf("could not set socket write buffer size: %v", err))
 	}
 
-	requestIndex := 0
-	requestGroup := &RequestGroup{}
+	index := 0
+
+	block := make([]byte, BlockSize)
 
 	for {
 
-		packetBytes, from, err := conn.ReadFromUDP(requestGroup.requests[requestIndex].data[:])
+		packetBytes, from, err := conn.ReadFromUDP(block[index+6:index+6+100])
 		if err != nil {
 			break
 		}
@@ -136,48 +120,30 @@ func runServerThread(threadIndex int) {
 			continue
 		}
 
-		requestGroup.requests[requestIndex].from = *from
-		
-		requestIndex++
+		copy(block[index:], from.IP.To4())
 
-		if requestIndex == RequestsPerBlock {
-			channel[threadIndex] <- requestGroup
-			requestGroup = &RequestGroup{}
-			requestIndex = 0
-		}
-	}	
-}
+		binary.LittleEndian.PutUint16(block[index+4:index+6], uint16(from.Port))
 
-func runWorkerThread(threadIndex int) {
-	backendURL := fmt.Sprintf("http://%s/hash", backendAddress.String())
-	fmt.Printf("backend url is %s\n", backendURL)
-    httpClient := &http.Client{Transport: &http.Transport{MaxIdleConnsPerHost: 1000}, Timeout: 1 * time.Second}
-	for {
-		requestGroup := <- channel[threadIndex]
-		block := make([]byte, BlockSize)
-		index := 0
-		for i := 0; i < RequestsPerBlock; i++ {
-			request := &requestGroup.requests[i]
-			copy(block[index:], request.from.IP.To4())
-			binary.LittleEndian.PutUint16(block[index+4:index+6], uint16(request.from.Port))
-			copy(block[index+6:index+RequestSize], request.data[:])
+		if index == BlockSize {
+			go func() {
+				response := PostBinary(httpClient, backendURL, block)
+				if len(response) == ResponseSize * RequestsPerBlock {
+					responseIndex := 0
+					for i := 0; i < RequestsPerBlock; i++ {
+						ip := response[responseIndex:responseIndex+4]
+						port := binary.LittleEndian.Uint16(response[responseIndex+4:responseIndex+6])
+						from := net.UDPAddr{IP: ip, Port: int(port)}
+						socket[threadIndex].WriteToUDP(response[responseIndex+6:responseIndex+6+8], &from)
+						responseIndex += ResponseSize
+					}
+				}
+			}()
+			block = make([]byte, BlockSize)
+			index = 0
+		} else {
 			index += RequestSize
 		}
-		go func() {
-			response := PostBinary(httpClient, backendURL, block)
-			if len(response) == ResponseSize * RequestsPerBlock {
-				responseIndex := 0
-				for i := 0; i < RequestsPerBlock; i++ {
-					ip := response[responseIndex:responseIndex+4]
-					port := binary.LittleEndian.Uint16(response[responseIndex+4:responseIndex+6])
-					from := net.UDPAddr{IP: ip, Port: int(port)}
-					socketIndex := i % NumThreads
-					socket[socketIndex].WriteToUDP(response[responseIndex+6:responseIndex+6+8], &from)
-					responseIndex += ResponseSize
-				}
-			}
-		}()
-	}
+	}	
 }
 
 func PostBinary(client *http.Client, url string, data []byte) []byte {
@@ -186,14 +152,17 @@ func PostBinary(client *http.Client, url string, data []byte) []byte {
 	request.Header.Add("Content-Type", "application/octet-stream")
 	response, err := client.Do(request)
 	if err != nil {
+		fmt.Printf("error: posting request: %v\n", err)
 		return nil
 	}
 	defer response.Body.Close()
 	if response.StatusCode != 200 {
+		fmt.Printf("error: status code is %d\n", response.StatusCode)
 		return nil
 	}
 	body, error := io.ReadAll(response.Body)
 	if error != nil {
+		fmt.Printf("error: reading response: %v\n", error)
 		return nil
 	}
 	return body

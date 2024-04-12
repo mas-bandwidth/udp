@@ -281,10 +281,14 @@ resource "google_compute_instance_template" "client" {
     email  = google_service_account.udp_runtime.email
     scopes = ["cloud-platform"]
   }
+
+  lifecycle {
+    create_before_destroy = true
+  }
 }
 
 resource "google_compute_region_instance_group_manager" "client" {
-  target_size               = 10
+  target_size               = 1
   name                      = "client"
   project                   = google_project.udp.project_id
   region                    = var.google_region
@@ -302,6 +306,7 @@ resource "google_compute_region_instance_group_manager" "client" {
     max_unavailable_fixed          = 0
     replacement_method             = "SUBSTITUTE"
   }
+  depends_on = [google_compute_instance_template.client]
 }
 
 # ----------------------------------------------------------------------------------------

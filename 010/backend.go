@@ -28,9 +28,13 @@ func main() {
 func hash(w http.ResponseWriter, req *http.Request) {
 	request, err := io.ReadAll(req.Body)
 	if err != nil || len(request) != BlockSize {
+		// todo
+		fmt.Printf("wrong request size\n")
 		w.WriteHeader(http.StatusBadRequest)
 		return
 	}
+	// todo
+	fmt.Printf("processing request\n")
 	requestIndex := 0
 	responseIndex := 0
 	response := [ResponseSize*RequestsPerBlock]byte{}
