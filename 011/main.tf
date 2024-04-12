@@ -175,6 +175,32 @@ resource "google_compute_subnetwork" "udp" {
   private_ip_google_access = true
 }
 
+resource "google_compute_router" "router" {
+  name    = "router-to-internet"
+  network = google_compute_network.udp.id
+  project = google_project.udp.project_id
+  region  = var.google_region
+}
+
+resource "google_compute_router_nat" "nat" {
+  name                               = "nat"
+  project                            = google_project.udp.project_id
+  router                             = google_compute_router.router.name
+  region                             = var.google_region
+  nat_ip_allocate_option             = "AUTO_ONLY"
+  source_subnetwork_ip_ranges_to_nat = "ALL_SUBNETWORKS_ALL_IP_RANGES"
+}
+
+resource "google_compute_subnetwork" "internal_http_load_balancer" {
+  name          = "internal-http-load-balancer"
+  project       = google_project.udp.project_id
+  region        = var.google_region
+  purpose       = "INTERNAL_HTTPS_LOAD_BALANCER"
+  role          = "ACTIVE"
+  network       = google_compute_network.udp.id
+  ip_cidr_range = "10.1.0.0/16"
+}
+
 resource "google_compute_firewall" "allow_ssh" {
   name          = "allow-ssh"
   project       = google_project.udp.project_id
@@ -295,7 +321,7 @@ resource "google_compute_region_instance_group_manager" "client" {
 # ----------------------------------------------------------------------------------------
 
 resource "google_compute_address" "server_address" {
-  name    = "server-address"
+  name    = "server-address-${var.tag}"
   project = google_project.udp.project_id
 }
 
@@ -303,7 +329,7 @@ resource "google_compute_instance" "server" {
 
   name         = "server-${var.tag}"
   project      = google_project.udp.project_id
-  machine_type = "c3-highcpu-88"
+  machine_type = "c3-highcpu-22"
   zone         = var.google_zone
   tags         = ["allow-ssh", "allow-udp"]
 
@@ -323,10 +349,6 @@ resource "google_compute_instance" "server" {
     }
   }
 
-  network_performance_config {
-    total_egress_bandwidth_tier = "TIER_1"
-  }
-
   metadata = {
     startup-script = <<-EOF2
     #!/bin/bash
@@ -341,7 +363,7 @@ resource "google_compute_instance" "server" {
     go get
     go build server.go
     cat <<EOF > /app/server.env
-    BACKEND_ADDRESS=${google_compute_instance.backend.network_interface[0].network_ip}:50000
+    BACKEND_ADDRESS=${google_compute_address.backend.address}:50000
     EOF
     cp server.service /etc/systemd/system/server.service
     systemctl daemon-reload
@@ -357,33 +379,80 @@ resource "google_compute_instance" "server" {
 
 # ----------------------------------------------------------------------------------------
 
-resource "google_compute_address" "backend_address" {
-  name    = "backend-address"
-  project = google_project.udp.project_id
+resource "google_compute_address" "backend" {
+  name         = "backend"
+  project      = google_project.udp.project_id
+  region       = var.google_region
+  subnetwork   = google_compute_subnetwork.udp.id
+  address_type = "INTERNAL"
+  purpose      = "SHARED_LOADBALANCER_VIP"
 }
 
-resource "google_compute_instance" "backend" {
+resource "google_compute_forwarding_rule" "backend" {
+  name                  = "backend"
+  project               = google_project.udp.project_id
+  region                = var.google_region
+  depends_on            = [google_compute_subnetwork.internal_http_load_balancer]
+  ip_protocol           = "TCP"
+  ip_address            = google_compute_address.backend.id
+  load_balancing_scheme = "INTERNAL_MANAGED"
+  port_range            = "50000"
+  target                = google_compute_region_target_http_proxy.backend.id
+  network               = google_compute_network.udp.id
+  subnetwork            = google_compute_subnetwork.udp.id
+  network_tier          = "PREMIUM"
+}
 
-  name         = "backend-${var.tag}"
-  project      = google_project.udp.project_id
-  machine_type = "c3-highcpu-88"
-  zone         = var.google_zone
-  tags         = ["allow-ssh", "allow-http"]
+resource "google_compute_region_target_http_proxy" "backend" {
+  name     = "backend"
+  project  = google_project.udp.project_id
+  region   = var.google_region
+  url_map  = google_compute_region_url_map.backend.id
+}
 
-  allow_stopping_for_update = true
+resource "google_compute_region_url_map" "backend" {
+  name            = "backend"
+  project         = google_project.udp.project_id
+  region          = var.google_region
+  default_service = google_compute_region_backend_service.backend.id
+}
 
-  boot_disk {
-    initialize_params {
-      image = "ubuntu-os-cloud/ubuntu-minimal-2204-lts"
-    }
+resource "google_compute_region_backend_service" "backend" {
+  name                  = "backend"
+  project               = google_project.udp.project_id
+  region                = var.google_region
+  protocol              = "HTTP"
+  load_balancing_scheme = "INTERNAL_MANAGED"
+  timeout_sec           = 10
+  health_checks         = [google_compute_region_health_check.backend_lb.id]
+  backend {
+    group               = google_compute_region_instance_group_manager.backend.instance_group
+    balancing_mode      = "UTILIZATION"
+    capacity_scaler     = 1.0
   }
+  connection_draining_timeout_sec = 60
+}
+
+resource "google_compute_instance_template" "backend" {
+
+  name           = "backend-${var.tag}"
+
+  project        = google_project.udp.project_id
+
+  machine_type   = "c3-highcpu-22"
 
   network_interface {
-    network    = google_compute_network.udp.id
-    subnetwork = google_compute_subnetwork.udp.id
-    access_config {
-      nat_ip = google_compute_address.backend_address.address
-    }
+    network      = google_compute_network.udp.id
+    subnetwork   = google_compute_subnetwork.udp.id
+  }
+
+  tags           = ["allow-ssh", "allow-http"]
+
+  disk {
+    source_image = "ubuntu-os-cloud/ubuntu-minimal-2204-lts"
+    auto_delete  = true
+    boot         = true
+    disk_type    = "pd-ssd"
   }
 
   metadata = {
@@ -408,6 +477,66 @@ resource "google_compute_instance" "backend" {
   service_account {
     email  = google_service_account.udp_runtime.email
     scopes = ["cloud-platform"]
+  }
+
+  lifecycle {
+    create_before_destroy = true
+  }
+}
+
+resource "google_compute_region_health_check" "backend_lb" {
+  name                = "backend-lb"
+  timeout_sec         = 1
+  check_interval_sec  = 1
+  healthy_threshold   = 5
+  unhealthy_threshold = 2
+  project             = google_project.udp.project_id
+  region              = var.google_region
+  http_health_check {
+    request_path      = "/lb_health"
+    port              = "50000"
+  }
+}
+
+resource "google_compute_health_check" "backend_vm" {
+  name                = "backend-vm"
+  project             = google_project.udp.project_id
+  check_interval_sec  = 5
+  timeout_sec         = 5
+  healthy_threshold   = 2
+  unhealthy_threshold = 10
+  http_health_check {
+    request_path      = "/vm_health"
+    port              = "50000"
+  }
+}
+
+resource "google_compute_region_instance_group_manager" "backend" {
+  target_size               = 5
+  name                      = "backend"
+  project                   = google_project.udp.project_id
+  region                    = var.google_region
+  distribution_policy_zones = var.google_zones
+  version {
+    instance_template = google_compute_instance_template.backend.id
+    name              = "primary"
+  }
+  base_instance_name = "backend"
+  named_port {
+    name = "http"
+    port = 50000
+  }
+  auto_healing_policies {
+    health_check      = google_compute_health_check.backend_vm.id
+    initial_delay_sec = 300
+  }
+  update_policy {
+    type                           = "PROACTIVE"
+    minimal_action                 = "REPLACE"
+    most_disruptive_allowed_action = "REPLACE"
+    max_surge_fixed                = 10
+    max_unavailable_fixed          = 0
+    replacement_method             = "SUBSTITUTE"
   }
 }
 

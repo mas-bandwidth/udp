@@ -18,7 +18,9 @@ const BlockSize = RequestsPerBlock * RequestSize
 func main() {
 	fmt.Printf("starting backend on port %d\n", BackendPort)
 	http.HandleFunc("/hash", hash)
-	err := http.ListenAndServe(fmt.Sprintf("0.0.0.0:%d", BackendPort), nil)
+	http.HandleFunc("/vm_health", health)
+	http.HandleFunc("/lb_health", health)
+	err := http.ListenAndServe(fmt.Sprintf("127.0.0.1:%d", BackendPort), nil)
 	if err != nil {
 		fmt.Printf("error: error starting http server: %v", err)
 		os.Exit(1)
@@ -44,4 +46,8 @@ func hash(w http.ResponseWriter, req *http.Request) {
 		responseIndex += ResponseSize
 	}
 	w.Write(response[:])
+}
+
+func health(w http.ResponseWriter, req *http.Request) {
+	w.WriteHeader(http.StatusOK)
 }

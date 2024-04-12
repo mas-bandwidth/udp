@@ -33,9 +33,9 @@ type RequestGroup struct {
 	requests [RequestsPerBlock]Request
 }
 
-var channel chan *RequestGroup
-
 var socket [NumThreads]*net.UDPConn
+
+var channel [NumThreads]chan *RequestGroup
 
 var backendAddress net.UDPAddr
 
@@ -59,7 +59,9 @@ func main() {
 
 	fmt.Printf("backend address is %s\n", backendAddress.String())
 
-    channel = make(chan *RequestGroup)
+	for i := 0; i < NumThreads; i++ {
+	    channel[i] = make(chan *RequestGroup)
+	}
 
 	for i := 0; i < NumThreads; i++ {
 		createServerSocket(i)
@@ -71,9 +73,11 @@ func main() {
 		}(i)
 	}
 
-	go func() {
-		runWorkerThread()
-	}()
+	for i := 0; i < NumThreads; i++ {
+		go func(threadIndex int) {
+			runWorkerThread(threadIndex)
+		}(i)
+	}
 
 	termChan := make(chan os.Signal, 1)
 	signal.Notify(termChan, os.Interrupt, syscall.SIGTERM)
@@ -140,19 +144,19 @@ func runServerThread(threadIndex int) {
 		requestIndex++
 
 		if requestIndex == RequestsPerBlock {
-			channel <- requestGroup
+			channel[threadIndex] <- requestGroup
 			requestGroup = &RequestGroup{}
 			requestIndex = 0
 		}
 	}	
 }
 
-func runWorkerThread() {
+func runWorkerThread(threadIndex int) {
 	backendURL := fmt.Sprintf("http://%s/hash", backendAddress.String())
 	fmt.Printf("backend url is %s\n", backendURL)
     httpClient := &http.Client{Transport: &http.Transport{MaxIdleConnsPerHost: 1000}, Timeout: 1 * time.Second}
 	for {
-		requestGroup := <- channel
+		requestGroup := <- channel[threadIndex]
 		block := make([]byte, BlockSize)
 		index := 0
 		for i := 0; i < RequestsPerBlock; i++ {
