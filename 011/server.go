@@ -12,8 +12,8 @@ import (
 	"time"
 
 	"github.com/asavie/xdp"
-	"github.com/google/gopacket"
-	"github.com/google/gopacket/layers"
+	// "github.com/google/gopacket"
+	// "github.com/google/gopacket/layers"
 )
 
 var quit uint64
@@ -108,7 +108,7 @@ func main() {
 				if numRx > 0 {
 					rxDescs := xsk.Receive(numRx)
 					for i := 0; i < len(rxDescs); i++ {
-						pktData := xsk.GetFrame(rxDescs[i])
+						//pktData := xsk.GetFrame(rxDescs[i])
 						atomic.AddUint64(&packetsReceived, uint64(numRx))
 						// pkt := gopacket.NewPacket(pktData, layers.LayerTypeEthernet, gopacket.Default)
 						// fmt.Printf("received frame %d:\nhexdump:\n%s\n\n%+v\n\n", i, hex.Dump(pktData[:]), pkt)
