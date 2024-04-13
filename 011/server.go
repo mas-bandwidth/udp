@@ -2,6 +2,88 @@ package main
 
 import (
 	"fmt"
+	"os/signal"
+	"syscall"
+
+	"github.com/asavie/xdp"
+	"github.com/vishvananda/netlink"
+)
+
+const NetworkDevice = "enp4s0"
+
+const NumQueues = 16
+
+var quit uint64
+var packetsReceived uint64
+
+func main() {
+
+	fmt.Printf("starting server on %s with %d receive queues\n", NetworkDevice, NumQueues)
+
+	go func() {
+
+		for queueId := 0; queueId < NumQueues; queueId++ {
+
+			link, err := netlink.LinkByName(NetworkDevice)
+			if err != nil {
+				panic(err)
+			}
+
+			xsk, err := xdp.NewSocket(link.Attrs().Index, queuedId)
+			if err != nil {
+				panic(err)
+			}
+
+			for {
+				xsk.Fill(xsk.GetDescs(xsk.NumFreeFillSlots()))
+				numRx, _, err := xsk.Poll(-1)
+				if err != nil {
+					panic(err)
+				}
+				rxDescs := xsk.Receive(numRx)
+				atomic.AddUint64(&packetsReceived, uint64(numRx))
+				/*
+				for i := 0; i < len(rxDescs); i++ {
+					frame := xsk.GetFrame(rxDescs[i])
+					for i := 0; i < 6; i++ {
+						frame[i] = byte(0xff)
+					}
+				}
+				xsk.Transmit(rxDescs)
+				*/
+			}
+		}
+	}
+
+	termChan := make(chan os.Signal, 1)
+
+	signal.Notify(termChan, os.Interrupt, syscall.SIGTERM)
+
+	ticker := time.NewTicker(time.Second)
+ 
+ 	for {
+		select {
+		case <-termChan:
+			fmt.Printf("\nreceived shutdown signal\n")
+			atomic.StoreUint64(&quit, 1)
+	 	case <-ticker.C:
+	 		received := atomic.LoadUint64(&packetsReceived)
+	 		fmt.Printf("received %d\n", received)
+	 	}
+		quit := atomic.LoadUint64(&quit)
+		if quit != 0 {
+			break
+		}
+ 	}
+
+ 	fmt.Printf("shutting down\n")
+}
+
+/*
+package main
+
+import (
+	"fmt"
 	"net"
 	"context"
 	"io"
@@ -88,12 +170,10 @@ func createServerSocket(threadIndex int) {
 
 func runServerThread(threadIndex int) {
 
-	/*
-	backendURL := fmt.Sprintf("http://%s/hash", backendAddress.String())
+	// backendURL := fmt.Sprintf("http://%s/hash", backendAddress.String())
 
-    httpClient := &http.Client{Transport: &http.Transport{MaxIdleConnsPerHost: 1000}, Timeout: 1 * time.Second}
-    */
-
+    // httpClient := &http.Client{Transport: &http.Transport{MaxIdleConnsPerHost: 1000}, Timeout: 1 * time.Second}
+    
 	conn := socket[threadIndex]
 
 	defer conn.Close()
@@ -112,25 +192,23 @@ func runServerThread(threadIndex int) {
 
 	for {
 
-		/*
-		if index == BlockSize {
-			go func(request []byte) {
-				response := PostBinary(httpClient, backendURL, request)
-				if len(response) == ResponseSize * RequestsPerBlock {
-					responseIndex := 0
-					for i := 0; i < RequestsPerBlock; i++ {
-						ip := response[responseIndex:responseIndex+4]
-						port := binary.LittleEndian.Uint16(response[responseIndex+4:responseIndex+6])
-						from := net.UDPAddr{IP: ip, Port: int(port)}
-						socket[threadIndex].WriteToUDP(response[responseIndex+6:responseIndex+6+8], &from)
-						responseIndex += ResponseSize
-					}
-				}
-			}(block)
-			block = make([]byte, BlockSize)
-			index = 0
-		}
-		*/
+		// if index == BlockSize {
+		// 	go func(request []byte) {
+		// 		response := PostBinary(httpClient, backendURL, request)
+		// 		if len(response) == ResponseSize * RequestsPerBlock {
+		// 			responseIndex := 0
+		// 			for i := 0; i < RequestsPerBlock; i++ {
+		// 				ip := response[responseIndex:responseIndex+4]
+		// 				port := binary.LittleEndian.Uint16(response[responseIndex+4:responseIndex+6])
+		// 				from := net.UDPAddr{IP: ip, Port: int(port)}
+		// 				socket[threadIndex].WriteToUDP(response[responseIndex+6:responseIndex+6+8], &from)
+		// 				responseIndex += ResponseSize
+		// 			}
+		// 		}
+		// 	}(block)
+		// 	block = make([]byte, BlockSize)
+		// 	index = 0
+		// }
 
 		packetBytes, from, err := conn.ReadFromUDP(block[index+6:index+6+100])
 		if err != nil {
@@ -145,13 +223,11 @@ func runServerThread(threadIndex int) {
 		var dummy [8]byte
 		socket[threadIndex].WriteToUDP(dummy[:], from)
 
-		/*
-		copy(block[index:], from.IP.To4())
+		// copy(block[index:], from.IP.To4())
 
-		binary.LittleEndian.PutUint16(block[index+4:index+6], uint16(from.Port))
+		// binary.LittleEndian.PutUint16(block[index+4:index+6], uint16(from.Port))
 		
-		index += RequestSize
-		*/
+		// index += RequestSize
 	}	
 }
 
@@ -176,3 +252,4 @@ func PostBinary(client *http.Client, url string, data []byte) []byte {
 	}
 	return body
 }
+*/
