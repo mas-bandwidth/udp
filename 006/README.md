@@ -25,30 +25,34 @@ Results:
 
 ```console
 glenn@hulk:~/udp/006$ go run client.go
-starting 30000 clients
-sent delta 332252, received delta 285135
-sent delta 288638, received delta 223007
-sent delta 258424, received delta 249822
-sent delta 269752, received delta 255171
-sent delta 288963, received delta 216977
-sent delta 235732, received delta 281624
-sent delta 261674, received delta 241142
-sent delta 233617, received delta 261964
-sent delta 259070, received delta 256569
-sent delta 261217, received delta 260470
-sent delta 243065, received delta 273405
-sent delta 274137, received delta 203934
-sent delta 257131, received delta 279429
+starting 1000 clients
+sent delta 96544, received delta 54116
+sent delta 96771, received delta 92884
+sent delta 95436, received delta 95000
+sent delta 95456, received delta 94000
+sent delta 95951, received delta 97174
+sent delta 95473, received delta 93094
+sent delta 96212, received delta 96732
+sent delta 95523, received delta 104000
+sent delta 95964, received delta 94615
+sent delta 96412, received delta 96624
+sent delta 93194, received delta 81761
+sent delta 96762, received delta 102685
+sent delta 96001, received delta 100033
+sent delta 96520, received delta 91282
+sent delta 95962, received delta 98000
+sent delta 95105, received delta 95000
+sent delta 95542, received delta 97493
+sent delta 95896, received delta 94507
+sent delta 96073, received delta 94000
+sent delta 96125, received delta 99000
 ^C
 received shutdown signal
 shutting down
 done.
 ```
 
-As close as I can get. I think I'm hitting IO limits on the one machine.
+As close as I can get. I'm out of ideas for making the HTTP stuff any faster. I think I'm hitting IO limits on my machine.
 
-Dropping down to 10k clients, we have a solution that has no dropped packets:
+It's time to start going horizontal on google cloud, so we get the correct hashing so multiple cores get used to process packets...
 
-```console
-
-```
