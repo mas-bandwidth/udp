@@ -2,6 +2,192 @@ package main
 
 import (
 	"fmt"
+	// "net"
+	"strconv"
+	"sync"
+	"sync/atomic"
+	"os"
+	"os/signal"
+	"syscall"
+	"time"
+
+	"github.com/asavie/xdp"
+	"github.com/google/gopacket"
+	"github.com/google/gopacket/layers"
+)
+
+var quit uint64
+var packetsReceived uint64
+
+func main() {
+
+	numQueues := 16 // default on google cloud
+
+	networkDevice := "ens3"
+
+	networkDeviceOverride := os.Getenv("NETWORK_DEVICE")
+	if networkDeviceOverride != "" {
+		networkDevice = networkDeviceOverride
+	}
+
+	numQueuesOverride := os.Getenv("NUM_QUEUES")
+	if numQueuesOverride != "" {
+		numQueues, _ = strconv.Atoi(numQueuesOverride)
+	}
+
+	fmt.Printf("starting server on %s with %d receive queues\n", networkDevice, numQueues)
+
+	var wg sync.WaitGroup
+
+	wg.Add(numQueues)
+
+	interfaces, err := net.Interfaces()
+	if err != nil {
+		fmt.Printf("error: failed to fetch the list of network interfaces on the system: %v\n", err)
+		os.Exit(1)
+	}
+
+	interfaceIndex := -1
+	for _, iface := range interfaces {
+		if iface.Name == linkName {
+			interfaceIndex = iface.Index
+			break
+		}
+	}
+
+	if interfaceIndex == -1 {
+		fmt.Printf("error: couldn't find network interface\n")
+		os.Exit(1)
+	}
+
+	for i := 0; i < numQueues; i++ {
+
+		go func(queueId int) {
+
+			program, err := xdp.NewProgram(queueId + 1)
+			if err != nil {
+				fmt.Printf("error: failed to create xdp program: %v\n", err)
+				os.Exit(1)
+			}
+			defer program.Close()
+			if err := program.Attach(Ifindex); err != nil {
+				fmt.Printf("error: failed to attach xdp program to interface: %v\n", err)
+				os.Exit(1)
+			}
+			defer program.Detach(Ifindex)
+
+			xsk, err := xdp.NewSocket(Ifindex, queueId, nil)
+			if err != nil {
+				fmt.Printf("error: failed to create an xdp socket: %v\n", err)
+				os.Exit(1)
+			}
+
+			if err := program.Register(queueId, xsk.FD()); err != nil {
+				fmt.Printf("error: failed to register socket in bpf map: %v\n", err)
+				os.Exit(1)
+			}
+
+			defer program.Unregister(queueId)
+
+			for {
+
+				quit := atomic.LoadUint64(&quit)
+				if quit != 0 {
+					break
+				}
+
+				if n := xsk.NumFreeFillSlots(); n > 0 {
+					xsk.Fill(xsk.GetDescs(n, true))
+				}
+
+				numRx, numCompl, err := xsk.Poll(-1)
+				if err != nil {
+					panic(err)
+				}
+
+				if numRx > 0 {
+					rxDescs := xsk.Receive(numRx)
+					for i := 0; i < len(rxDescs); i++ {
+						pktData := xsk.GetFrame(rxDescs[i])
+						atomic.AddUint64(&packetsReceived, uint64(numRx))
+						// pkt := gopacket.NewPacket(pktData, layers.LayerTypeEthernet, gopacket.Default)
+						// fmt.Printf("received frame %d:\nhexdump:\n%s\n\n%+v\n\n", i, hex.Dump(pktData[:]), pkt)
+						// for i := 0; i < 6; i++ {
+						// 	pktData[i] = byte(0xff)
+						// }
+					}
+				}
+			}
+
+			wg.Done()
+		}(i)
+	}
+
+	termChan := make(chan os.Signal, 1)
+
+	signal.Notify(termChan, os.Interrupt, syscall.SIGTERM)
+
+	ticker := time.NewTicker(time.Second)
+ 
+	prev_received := uint64(0)
+
+ 	for {
+		select {
+		case <-termChan:
+			fmt.Printf("\nreceived shutdown signal\n")
+			atomic.StoreUint64(&quit, 1)
+	 	case <-ticker.C:
+	 		received := atomic.LoadUint64(&packetsReceived)
+	 		delta := received - prev_received
+	 		fmt.Printf("received %d\n", delta)
+	 		prev_received = received
+	 	}
+		quit := atomic.LoadUint64(&quit)
+		if quit != 0 {
+			break
+		}
+ 	}
+
+ 	fmt.Printf("shutting down\n")
+
+ 	wg.Wait()
+
+ 	fmt.Printf("done.\n")
+}
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+/*
+
+
+package main
+
+import (
+	"fmt"
 	"time"
 	"sync/atomic"
 	"os"
@@ -18,21 +204,6 @@ var packetsReceived uint64
 
 func main() {
 
-	numQueues := 16 // default on google cloud
-
-	networkDevice := "enp4s0"
-
-	networkDeviceOverride := os.Getenv("NETWORK_DEVICE")
-	if networkDeviceOverride != "" {
-		networkDevice = networkDeviceOverride
-	}
-
-	numQueuesOverride := os.Getenv("NUM_QUEUES")
-	if numQueuesOverride != "" {
-		numQueues, _ = strconv.Atoi(numQueuesOverride)
-	}
-
-	fmt.Printf("starting server on %s with %d receive queues\n", networkDevice, numQueues)
 
 	go func() {
 
@@ -83,7 +254,9 @@ func main() {
 			atomic.StoreUint64(&quit, 1)
 	 	case <-ticker.C:
 	 		received := atomic.LoadUint64(&packetsReceived)
-	 		fmt.Printf("received %d\n", received)
+	 		delta := received - prev_received
+	 		fmt.Printf("received %d\n", delta)
+	 		prev_received = received
 	 	}
 		quit := atomic.LoadUint64(&quit)
 		if quit != 0 {
@@ -93,6 +266,7 @@ func main() {
 
  	fmt.Printf("shutting down\n")
 }
+*/
 
 /*
 package main

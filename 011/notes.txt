@@ -19,3 +19,5 @@ https://www.baeldung.com/linux/using-ethtool
 https://lwn.net/Articles/750845/
 
 https://www.kernel.org/doc/html/v4.18/networking/af_xdp.html
+
+https://github.com/asavie/xdp/blob/master/examples/rebroadcast/rebroadcast.go
