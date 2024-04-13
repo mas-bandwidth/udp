@@ -18,7 +18,7 @@ import (
 const NumThreads = 64
 const ServerPort = 40000
 const SocketBufferSize = 1024*1024*1024
-const RequestsPerBlock = 100
+const RequestsPerBlock = 1000
 const RequestSize = 4 + 2 + 100
 const BlockSize = RequestsPerBlock * RequestSize
 const ResponseSize = 4 + 2 + 8
