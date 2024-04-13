@@ -6,43 +6,46 @@ import (
 	"context"
 	"io"
 	"os"
-	"time"
 	"os/signal"
 	"syscall"
+	"time"
 	"bytes"
 	"net/http"
 	"encoding/binary"
 	"golang.org/x/sys/unix"
 )
 
-const BackendURL = "http://127.0.0.1:50000/hash"
 const NumThreads = 64
 const ServerPort = 40000
-const MaxPacketSize = 1500
-const SocketBufferSize = 100*1024*1024
+const SocketBufferSize = 1024*1024*1024
 const RequestsPerBlock = 100
 const RequestSize = 4 + 2 + 100
 const BlockSize = RequestsPerBlock * RequestSize
 const ResponseSize = 4 + 2 + 8
 
-var httpClient *http.Client
-
-type Request struct {
-	data []byte
-	from net.UDPAddr
-}
-
-var channel chan Request
-
 var socket [NumThreads]*net.UDPConn
+
+var backendAddress net.UDPAddr
+
+func GetAddress(name string, defaultValue string) net.UDPAddr {
+	valueString, ok := os.LookupEnv(name)
+	if !ok {
+	    valueString = defaultValue
+	}
+	value, err := net.ResolveUDPAddr("udp", valueString)
+	if err != nil {
+		panic(fmt.Sprintf("invalid address in envvar %s", name))
+	}
+	return *value
+}
 
 func main() {
 
 	fmt.Printf("starting %d server threads on port %d\n", NumThreads, ServerPort)
 
-    httpClient = &http.Client{Transport: &http.Transport{MaxIdleConnsPerHost: 1000}, Timeout: 1 * time.Second}
+	backendAddress = GetAddress("BACKEND_ADDRESS", "127.0.0.1:50000")
 
-    channel = make(chan Request)
+	fmt.Printf("backend address is %s\n", backendAddress.String())
 
 	for i := 0; i < NumThreads; i++ {
 		createServerSocket(i)
@@ -53,10 +56,6 @@ func main() {
 			runServerThread(threadIndex)
 		}(i)
 	}
-
-	go func() {
-		runWorkerThread()
-	}()
 
 	termChan := make(chan os.Signal, 1)
 	signal.Notify(termChan, os.Interrupt, syscall.SIGTERM)
@@ -77,7 +76,7 @@ func createServerSocket(threadIndex int) {
 		},
 	}
 
-	lp, err := lc.ListenPacket(context.Background(), "udp", "127.0.0.1:40000")
+	lp, err := lc.ListenPacket(context.Background(), "udp", "0.0.0.0:40000")
 	if err != nil {
 		panic(fmt.Sprintf("could not bind socket: %v", err))
 	}
@@ -88,6 +87,8 @@ func createServerSocket(threadIndex int) {
 }
 
 func runServerThread(threadIndex int) {
+
+	backendURL := fmt.Sprintf("http://%s/hash", backendAddress.String())
 
 	conn := socket[threadIndex]
 
@@ -101,64 +102,65 @@ func runServerThread(threadIndex int) {
 		panic(fmt.Sprintf("could not set socket write buffer size: %v", err))
 	}
 
-	buffer := make([]byte, MaxPacketSize)
 
-	for {
-		packetBytes, from, err := conn.ReadFromUDP(buffer)
-		if err != nil {
-			break
-		}
-		if packetBytes != 100 {
-			continue
-		}
-		request := Request{data: buffer[:packetBytes], from: *from}
-		channel <- request
-	}	
-}
-
-func runWorkerThread() {
 	index := 0
 	block := make([]byte, BlockSize)
+
 	for {
-		request := <- channel
-		copy(block[index:], request.from.IP.To4())
-		binary.LittleEndian.PutUint16(block[index+4:index+6], uint16(request.from.Port))
-		copy(block[index+6:index+RequestSize], request.data)
-		index += RequestSize
+
 		if index == BlockSize {
-			go func() {
-				response := PostBinary(BackendURL, block)
+			go func(request []byte) {
+			    httpClient := &http.Client{Transport: &http.Transport{MaxIdleConnsPerHost: 1000}, Timeout: 1 * time.Second}
+				response := PostBinary(httpClient, backendURL, request)
 				if len(response) == ResponseSize * RequestsPerBlock {
 					responseIndex := 0
 					for i := 0; i < RequestsPerBlock; i++ {
 						ip := response[responseIndex:responseIndex+4]
 						port := binary.LittleEndian.Uint16(response[responseIndex+4:responseIndex+6])
 						from := net.UDPAddr{IP: ip, Port: int(port)}
-						socketIndex := i % NumThreads
-						socket[socketIndex].WriteToUDP(response[responseIndex+6:responseIndex+6+8], &from)
+						socket[threadIndex].WriteToUDP(response[responseIndex+6:responseIndex+6+8], &from)
 						responseIndex += ResponseSize
 					}
 				}
-			}()
+			}(block)
+			block = make([]byte, BlockSize)
 			index = 0
 		}
-	}
+
+		packetBytes, from, err := conn.ReadFromUDP(block[index+6:index+6+100])
+		if err != nil {
+			break
+		}
+		
+		if packetBytes != 100 {
+			continue
+		}
+
+		copy(block[index:], from.IP.To4())
+
+		binary.LittleEndian.PutUint16(block[index+4:index+6], uint16(from.Port))
+		
+		index += RequestSize
+	}	
 }
 
-func PostBinary(url string, data []byte) []byte {
+func PostBinary(client *http.Client, url string, data []byte) []byte {
 	buffer := bytes.NewBuffer(data)
 	request, _ := http.NewRequest("POST", url, buffer)
 	request.Header.Add("Content-Type", "application/octet-stream")
-	response, err := httpClient.Do(request)
+	response, err := client.Do(request)
 	if err != nil {
+		fmt.Printf("error: posting request: %v\n", err)
 		return nil
 	}
 	defer response.Body.Close()
 	if response.StatusCode != 200 {
+		fmt.Printf("error: status code is %d\n", response.StatusCode)
 		return nil
 	}
 	body, error := io.ReadAll(response.Body)
 	if error != nil {
+		fmt.Printf("error: reading response: %v\n", error)
 		return nil
 	}
 	return body
