@@ -94,7 +94,7 @@ func runClient(clientIndex int, serverAddress *net.UDPAddr) {
 
 	conn, err := net.ListenUDP("udp", &addr)
 	if err != nil {
-		panic(fmt.Sprintf("could not create udp socket: %v", err))
+		return
 	}
 	defer conn.Close()
 
