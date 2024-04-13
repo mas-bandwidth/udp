@@ -2,29 +2,43 @@ package main
 
 import (
 	"fmt"
+	"time"
+	"sync/atomic"
+	"os"
 	"os/signal"
 	"syscall"
+	"strconv"
 
 	"github.com/asavie/xdp"
 	"github.com/vishvananda/netlink"
 )
-
-const NetworkDevice = "enp4s0"
-
-const NumQueues = 16
 
 var quit uint64
 var packetsReceived uint64
 
 func main() {
 
-	fmt.Printf("starting server on %s with %d receive queues\n", NetworkDevice, NumQueues)
+	numQueues := 16 // default on google cloud
+
+	networkDevice := "enp4s0"
+
+	networkDeviceOverride := os.Getenv("NETWORK_DEVICE")
+	if networkDeviceOverride != "" {
+		networkDevice = networkDeviceOverride
+	}
+
+	numQueuesOverride := os.Getenv("NUM_QUEUES")
+	if numQueuesOverride != "" {
+		numQueues, _ = strconv.Atoi(numQueuesOverride)
+	}
+
+	fmt.Printf("starting server on %s with %d receive queues\n", networkDevice, numQueues)
 
 	go func() {
 
-		for queueId := 0; queueId < NumQueues; queueId++ {
+		for queueId := 0; queueId < numQueues; queueId++ {
 
-			link, err := netlink.LinkByName(NetworkDevice)
+			link, err := netlink.LinkByName(networkDevice)
 			if err != nil {
 				panic(err)
 			}
@@ -42,15 +56,13 @@ func main() {
 				}
 				rxDescs := xsk.Receive(numRx)
 				atomic.AddUint64(&packetsReceived, uint64(numRx))
-				/*
-				for i := 0; i < len(rxDescs); i++ {
-					frame := xsk.GetFrame(rxDescs[i])
-					for i := 0; i < 6; i++ {
-						frame[i] = byte(0xff)
-					}
-				}
-				xsk.Transmit(rxDescs)
-				*/
+				// for i := 0; i < len(rxDescs); i++ {
+				// 	frame := xsk.GetFrame(rxDescs[i])
+				// 	for i := 0; i < 6; i++ {
+				// 		frame[i] = byte(0xff)
+				// 	}
+				// }
+				// xsk.Transmit(rxDescs)
 			}
 		}
 	}
