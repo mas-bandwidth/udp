@@ -32,7 +32,7 @@
 # error "Endianness detection needs to be set up for your compiler?!"
 #endif
 
-#define DEBUG 1
+//#define DEBUG 1
 
 #if DEBUG
 #define debug_printf bpf_printk
@@ -104,31 +104,14 @@ SEC("server_xdp") int server_xdp_filter( struct xdp_md *ctx )
                         {
                             void * payload = (void*) udp + sizeof(struct udphdr);
                             int payload_bytes = data_end - payload;
-                            reflect_packet( data, payload_bytes );
                             if ( payload_bytes == 100 )
                             {
-                                // todo: fnv1a 64bit
-                                debug_printf( "100 byte packet from %d.%d.%d.%d:%d", 
-                                    ( ip->saddr       ) & 0xFF,
-                                    ( ip->saddr >> 8  ) & 0xFF,
-                                    ( ip->saddr >> 16 ) & 0xFF,
-                                    ( ip->saddr >> 24 ) & 0xFF,
-                                    bpf_htons(udp->source) );
-
-                                debug_printf( "from %d.%d.%d.%d:%d", 
-                                    ( ip->daddr       ) & 0xFF,
-                                    ( ip->daddr >> 8  ) & 0xFF,
-                                    ( ip->daddr >> 16 ) & 0xFF,
-                                    ( ip->daddr >> 24 ) & 0xFF,
-                                    bpf_htons(udp->dest) );
-
+                                reflect_packet( data, 8 );
                                 bpf_xdp_adjust_tail( ctx, -( payload_bytes - 8 ) );
-
                                 return XDP_TX;
                             }
                             else
                             {
-                                debug_printf("wrong packet size");
                                 return XDP_DROP;
                             }
                         }
