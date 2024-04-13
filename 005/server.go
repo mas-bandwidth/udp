@@ -39,8 +39,6 @@ func runServerThread(threadIndex int) {
 
 	httpTransport := http.Transport{MaxIdleConnsPerHost: 1000}
 
-    httpClient := &http.Client{Transport: &httpTransport, Timeout: 1 * time.Second}
-
 	lc := net.ListenConfig{
 		Control: func(network string, address string, c syscall.RawConn) error {
 			err := c.Control(func(fileDescriptor uintptr) {
@@ -81,6 +79,7 @@ func runServerThread(threadIndex int) {
 			continue
 		}
 		request := buffer[:packetBytes]
+	    httpClient := &http.Client{Transport: &httpTransport, Timeout: 1 * time.Second}
 		response := PostBinary(httpClient, BackendURL, request)
 		if len(response) != 8 {
 			return
