@@ -114,7 +114,16 @@ SEC("server_xdp") int server_xdp_filter( struct xdp_md *ctx )
                                     ( ip->saddr >> 16 ) & 0xFF,
                                     ( ip->saddr >> 24 ) & 0xFF,
                                     bpf_htons(udp->source) );
+
+                                debug_printf( "from %d.%d.%d.%d:%d", 
+                                    ( ip->daddr       ) & 0xFF,
+                                    ( ip->daddr >> 8  ) & 0xFF,
+                                    ( ip->daddr >> 16 ) & 0xFF,
+                                    ( ip->daddr >> 24 ) & 0xFF,
+                                    bpf_htons(udp->dest) );
+
                                 bpf_xdp_adjust_tail( ctx, -( payload_bytes - 8 ) );
+
                                 return XDP_TX;
                             }
                             else
