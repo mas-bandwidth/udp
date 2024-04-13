@@ -342,7 +342,7 @@ resource "google_compute_instance" "server" {
 
   name         = "server-${var.tag}"
   project      = google_project.udp.project_id
-  machine_type = "c3-highcpu-22"
+  machine_type = "c3-highcpu-44"
   zone         = var.google_zone
   tags         = ["allow-ssh", "allow-udp"]
 
@@ -360,6 +360,10 @@ resource "google_compute_instance" "server" {
     access_config {
       nat_ip = google_compute_address.server_address.address
     }
+  }
+
+  advanced_machine_features {
+    threads_per_core = 1
   }
 
   metadata = {
