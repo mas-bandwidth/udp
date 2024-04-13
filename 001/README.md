@@ -1,6 +1,8 @@
 # 001
 
-First attempt. Keep it simple and just see how quickly we can naively send UDP packets from a client to server, and get the hash back to the client. No backend yet.
+First attempt. 
+
+Keep it simple and just see how quickly we can naively send UDP packets from a client to server, and just reply with an 8 byte UDP packet containing the hash.
 
 To run:
 

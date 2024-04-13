@@ -12,7 +12,7 @@ import (
 
 const ServerPort = 40000
 const MaxPacketSize = 1500
-const SocketBufferSize = 2*1024*1024
+const SocketBufferSize = 4*1024*1024
 
 func main() {
 

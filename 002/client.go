@@ -13,9 +13,8 @@ import (
 	"math/rand"
 )
 
-const NumClients = 400
+const NumClients = 1000
 const MaxPacketSize = 1500
-const SocketBufferSize = 1024*1024
 
 var quit uint64
 var packetsSent uint64
@@ -56,6 +55,9 @@ func main() {
 
 	ticker := time.NewTicker(time.Second)
  
+	prev_sent := uint64(0)
+	prev_received := uint64(0)
+
  	for {
 		select {
 		case <-termChan:
@@ -64,7 +66,11 @@ func main() {
 	 	case <-ticker.C:
 	 		sent := atomic.LoadUint64(&packetsSent)
 	 		received := atomic.LoadUint64(&packetsReceived)
-	 		fmt.Printf("sent %d, received %d (%.1f%%)\n", sent, received, float64(received)/float64(sent)*100.0)
+	 		sent_delta := sent - prev_sent
+	 		received_delta := received - prev_received
+	 		fmt.Printf("sent delta %d, received delta %d\n", sent_delta, received_delta)
+			prev_sent = sent
+			prev_received = received
 	 	}
 		quit := atomic.LoadUint64(&quit)
 		if quit != 0 {
@@ -91,14 +97,6 @@ func runClient(clientIndex int, serverAddress *net.UDPAddr) {
 		panic(fmt.Sprintf("could not create udp socket: %v", err))
 	}
 	defer conn.Close()
-
-	if err := conn.SetReadBuffer(SocketBufferSize); err != nil {
-		panic(fmt.Sprintf("could not set socket read buffer size: %v", err))
-	}
-
-	if err := conn.SetWriteBuffer(SocketBufferSize); err != nil {
-		panic(fmt.Sprintf("could not set socket write buffer size: %v", err))
-	}
 
 	buffer := make([]byte, MaxPacketSize)
 
