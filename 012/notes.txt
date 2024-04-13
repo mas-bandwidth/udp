@@ -16,3 +16,7 @@ Add load balancer ingress bandwidth 1c per-GB, I think...
 It's a lot :)
 
 ----------
+
+"Using gVNIC, the maximum number of queues per vNIC is 16. If the calculated number is greater than 16, ignore the calculated number, and assign each vNIC 16 queues instead."
+
+https://cloud.google.com/compute/docs/network-bandwidth
