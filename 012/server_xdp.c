@@ -108,7 +108,12 @@ SEC("server_xdp") int server_xdp_filter( struct xdp_md *ctx )
                             if ( payload_bytes == 100 )
                             {
                                 // todo: fnv1a 64bit
-                                debug_printf("100 byte packet");
+                                debug_printf( "100 byte packet from %d.%d.%d.%d:%d", 
+                                    ( ip->saddr       ) & 0xFF,
+                                    ( ip->saddr >> 8  ) & 0xFF,
+                                    ( ip->saddr >> 16 ) & 0xFF,
+                                    ( ip->saddr >> 24 ) & 0xFF,
+                                    bpf_htons(udp->source) );
                                 bpf_xdp_adjust_tail( ctx, -( payload_bytes - 8 ) );
                                 return XDP_TX;
                             }
