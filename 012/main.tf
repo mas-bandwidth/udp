@@ -284,7 +284,7 @@ resource "google_compute_instance_template" "client" {
     go get
     go build client.go
     cat <<EOF > /app/client.env
-    NUM_CLIENTS=1
+    NUM_CLIENTS=1000
     SERVER_ADDRESS=${google_compute_instance.server.network_interface[0].network_ip}:40000
     EOF
     cat <<EOF > /etc/sysctl.conf
