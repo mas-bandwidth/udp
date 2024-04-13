@@ -1,6 +1,6 @@
 # 006
 
-Batch http requests.
+Reduce copies when batching and don't use channels.
 
 To run:
 
