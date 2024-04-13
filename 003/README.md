@@ -41,4 +41,6 @@ shutting down
 done.
 ```
 
-Can handle around 30k clients which is 300,000 packets per-second, and we're still using really naive sendto/recvfrom equivalents (syscall for every packet send and receive).
+Can handle around 30k clients on loopback which is 300,000 packets per-second, and we're still using really naive sendto/recvfrom equivalents (syscall for every packet send and receive).
+
+Nothing amazing, but decent enough to start exploring the server <-> backend part over HTTP...
