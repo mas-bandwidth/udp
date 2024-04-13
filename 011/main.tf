@@ -326,7 +326,7 @@ resource "google_compute_instance" "server" {
 
   name         = "server-${var.tag}"
   project      = google_project.udp.project_id
-  machine_type = "c3-highcpu-176"
+  machine_type = "c3-highcpu-22"
   zone         = var.google_zone
   tags         = ["allow-ssh", "allow-udp"]
 
@@ -397,7 +397,7 @@ resource "google_compute_instance" "backend" {
 
   name         = "backend-${var.tag}"
   project      = google_project.udp.project_id
-  machine_type = "c3-highcpu-44"
+  machine_type = "c3-highcpu-22"
   zone         = var.google_zone
   tags         = ["allow-ssh", "allow-http"]
 

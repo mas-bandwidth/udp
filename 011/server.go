@@ -43,7 +43,7 @@ func main() {
 				panic(err)
 			}
 
-			xsk, err := xdp.NewSocket(link.Attrs().Index, queuedId)
+			xsk, err := xdp.NewSocket(link.Attrs().Index, queueId)
 			if err != nil {
 				panic(err)
 			}
@@ -56,6 +56,7 @@ func main() {
 				}
 				rxDescs := xsk.Receive(numRx)
 				atomic.AddUint64(&packetsReceived, uint64(numRx))
+				_ = rxDescs
 				// for i := 0; i < len(rxDescs); i++ {
 				// 	frame := xsk.GetFrame(rxDescs[i])
 				// 	for i := 0; i < 6; i++ {
@@ -65,7 +66,7 @@ func main() {
 				// xsk.Transmit(rxDescs)
 			}
 		}
-	}
+	}()
 
 	termChan := make(chan os.Signal, 1)
 
