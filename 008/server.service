@@ -2,7 +2,7 @@
 Description=UDP Server Service
 
 [Service]
-ExecStart=/app/server
+ExecStart=/app/server ens3
 EnvironmentFile=/app/server.env
 Restart=always
 RestartSec=30
