@@ -1,6 +1,6 @@
 # 006
 
-Increase to batches of 1000, don't use channels, and reduce copies.
+Increase to batches of 1000, don't use channels, reduce copies.
 
 To run:
 
