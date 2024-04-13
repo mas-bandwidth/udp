@@ -20,13 +20,9 @@ const ServerPort = 40000
 const MaxPacketSize = 1500
 const SocketBufferSize = 100*1024*1024
 
-var httpClient *http.Client
-
 func main() {
 
 	fmt.Printf("starting %d server threads on port %d\n", NumThreads, ServerPort)
-
-    httpClient = &http.Client{Transport: &http.Transport{MaxIdleConnsPerHost: 1000}, Timeout: 1 * time.Second}
 
 	for i := 0; i < NumThreads; i++ {
 		go func(threadIndex int) {
@@ -40,6 +36,10 @@ func main() {
 }
 
 func runServerThread(threadIndex int) {
+
+	httpTransport := http.Transport{MaxIdleConnsPerHost: 1000}
+
+    httpClient := &http.Client{Transport: &httpTransport, Timeout: 1 * time.Second}
 
 	lc := net.ListenConfig{
 		Control: func(network string, address string, c syscall.RawConn) error {
@@ -89,7 +89,7 @@ func runServerThread(threadIndex int) {
 	}	
 }
 
-func PostBinary(url string, data []byte) []byte {
+func PostBinary(httpClient *http.Client, url string, data []byte) []byte {
 	buffer := bytes.NewBuffer(data)
 	request, _ := http.NewRequest("POST", url, buffer)
 	request.Header.Add("Content-Type", "application/octet-stream")
