@@ -1,23 +1,18 @@
-10k clients = ~50% of c3-highcpu-176 server, ~50% c3-highcpu-44 backend.
 
-10k clients -> 10*1000*100 packets per-second = 1M pps
+25k clients with XDP is ~10% of a c3-highcpu-44, set to one thread per-core (so, 22 cores, 16 recv queues...)
 
-10k clients -> 10*1000*100*100 bytes per-second = 10,000,000 -> 10M bytes per-sec, 80M bits per-sec, 80mbps. This is very low.
+100k clients with XDP is ~22% of a c3-highcpu-44
 
-n1-standard-16 can send around 100k packets per-second. seems quite low, most likely it's scheduling issues with the sleeps being so tight on 10ms.
+250k clients with XDP is ... can't do it. it stops working.
 
-UDP packets are the bottleneck. Even the high core machine with no HTTPS, still can't reply fast enough to go above 10k clients.
+Therefore, will cost 10 c3-highcpu-44 scaling horizontally to do it. It's probably cheaper to do this than to go to a higher instance type.
 
-netstat -anus
+Cost is ~2254.14 * 10 = 22k per-month, just for to VMs
 
-https://linux-tips.com/t/udp-packet-drops-and-packet-receive-error-difference/237
+Add egress bandwidth
 
-sudo dropwatch -l kas
+Add load balancer ingress bandwidth 1c per-GB, I think...
 
-https://www.baeldung.com/linux/using-ethtool
+It's a lot :)
 
-https://lwn.net/Articles/750845/
-
-https://www.kernel.org/doc/html/v4.18/networking/af_xdp.html
-
-https://github.com/asavie/xdp/blob/master/examples/rebroadcast/rebroadcast.go
+----------
