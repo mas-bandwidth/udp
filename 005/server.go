@@ -81,7 +81,7 @@ func runServerThread(threadIndex int) {
 			continue
 		}
 		request := buffer[:packetBytes]
-		response := PostBinary(BackendURL, request)
+		response := PostBinary(httpClient, BackendURL, request)
 		if len(response) != 8 {
 			return
 		}
