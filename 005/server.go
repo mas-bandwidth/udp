@@ -79,7 +79,7 @@ func runServerThread(threadIndex int) {
 			continue
 		}
 		request := buffer[:packetBytes]
-	    httpClient := &http.Client{Transport: &httpTransport, Timeout: 1 * time.Second}
+	    httpClient := &http.Client{Transport: &httpTransport, Timeout: 10 * time.Second}
 		response := PostBinary(httpClient, BackendURL, request)
 		if len(response) != 8 {
 			return
