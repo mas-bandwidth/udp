@@ -13,7 +13,7 @@ import (
 	"math/rand"
 )
 
-const NumClients = 100
+const NumClients = 1000
 const MaxPacketSize = 1500
 
 var quit uint64
@@ -55,6 +55,9 @@ func main() {
 
 	ticker := time.NewTicker(time.Second)
  
+	prev_sent := uint64(0)
+	prev_received := uint64(0)
+
  	for {
 		select {
 		case <-termChan:
@@ -63,7 +66,11 @@ func main() {
 	 	case <-ticker.C:
 	 		sent := atomic.LoadUint64(&packetsSent)
 	 		received := atomic.LoadUint64(&packetsReceived)
-	 		fmt.Printf("sent %d, received %d (%.1f%%)\n", sent, received, float64(received)/float64(sent)*100.0)
+	 		sent_delta := sent - prev_sent
+	 		received_delta := received - prev_received
+	 		fmt.Printf("sent delta %d, received delta %d\n", sent_delta, received_delta)
+			prev_sent = sent
+			prev_received = received
 	 	}
 		quit := atomic.LoadUint64(&quit)
 		if quit != 0 {
