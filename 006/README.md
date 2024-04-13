@@ -45,8 +45,10 @@ shutting down
 done.
 ```
 
-As close as I can get. I think I'm hitting io limits on the one machine.
+As close as I can get. I think I'm hitting IO limits on the one machine.
 
-Dropping down to 25k clients, we have a solution that has no dropped packets:
+Dropping down to 10k clients, we have a solution that has no dropped packets:
 
+```console
 
+```
