@@ -40,7 +40,7 @@
 #define debug_printf(...) do { } while (0)
 #endif // #if DEBUG
 
-static void server_packet( void * data, int payload_bytes )
+static void reflect_packet( void * data, int payload_bytes )
 {
     struct ethhdr * eth = data;
     struct iphdr  * ip  = data + sizeof( struct ethhdr );
