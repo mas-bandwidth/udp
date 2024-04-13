@@ -23,24 +23,21 @@ Results:
 
 ```console
 glenn@hulk:~/udp/003$ go run client.go
-starting 30000 clients
-sent delta 416614, received delta 416501
-sent delta 342716, received delta 342561
-sent delta 342897, received delta 342660
-sent delta 341856, received delta 341719
-sent delta 343937, received delta 344361
-sent delta 342054, received delta 342165
-sent delta 339302, received delta 339368
-sent delta 340573, received delta 340552
-sent delta 338369, received delta 338167
-sent delta 340355, received delta 340550
-sent delta 338247, received delta 338135
+starting 1000 clients
+sent delta 97545, received delta 97545
+sent delta 94000, received delta 94000
+sent delta 94110, received delta 94003
+sent delta 94559, received delta 94666
+sent delta 95927, received delta 95869
+sent delta 95014, received delta 95072
+sent delta 94000, received delta 93992
+sent delta 94000, received delta 94008
 ^C
 received shutdown signal
 shutting down
 done.
 ```
 
-Can handle around 30k clients on loopback which is 300,000 packets per-second, and we're still using really naive sendto/recvfrom equivalents (syscall for every packet send and receive).
+Once again, no change. 
 
-Nothing amazing, but decent enough to start exploring the server <-> backend part over HTTP...
+The reason is that we're sending all the packets from the same source IP address to the same dest IP address, so the hash is always the same, and they end up getting processed on one core only.
