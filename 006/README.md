@@ -1,6 +1,6 @@
 # 006
 
-Increase to batches of 1000, increase timeout to 10 sec, reduce copies and don't use channels.
+Increase to batches of 1000, don't use channels, and reduce copies.
 
 To run:
 

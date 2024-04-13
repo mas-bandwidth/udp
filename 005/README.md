@@ -27,18 +27,19 @@ Results:
 
 ```console
 glenn@hulk:~/udp/005$ go run client.go
-starting 30000 clients
-sent delta 471212, received delta 41258
-sent delta 401873, received delta 33887
-sent delta 413246, received delta 32503
-sent delta 413949, received delta 32823
-sent delta 408071, received delta 32602
-sent delta 414328, received delta 30892
-sent delta 398925, received delta 30284
+starting 1000 clients
+sent delta 95851, received delta 1401
+sent delta 95510, received delta 1445
+sent delta 95254, received delta 1419
+sent delta 95256, received delta 1423
+sent delta 94706, received delta 1469
+sent delta 95750, received delta 1342
+sent delta 94960, received delta 1433
+sent delta 94764, received delta 1418
 ^C
 received shutdown signal
 shutting down
 done.
 ```
 
-Better.
+Better...
