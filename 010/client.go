@@ -15,7 +15,7 @@ import (
 
 const StartPort = 10000
 const MaxPacketSize = 1500
-const SocketBufferSize = 2*1024*1024
+const SocketBufferSize = 256*1024*1024
 
 var numClients int
 

@@ -13,3 +13,5 @@ netstat -anus
 https://linux-tips.com/t/udp-packet-drops-and-packet-receive-error-difference/237
 
 sudo dropwatch -l kas
+
+https://www.baeldung.com/linux/using-ethtool
