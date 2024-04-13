@@ -15,7 +15,7 @@ import (
 
 const StartPort = 10000
 const MaxPacketSize = 1500
-const SocketBufferSize = 256*1024*1024
+const SocketBufferSize = 2*1024*1024
 
 var numClients int
 
@@ -148,8 +148,10 @@ func runClient(clientIndex int, serverAddress *net.UDPAddr) {
 		if quit != 0 {
 			break
 		}
-		conn.WriteToUDP(packetData[:], serverAddress)
-		atomic.AddUint64(&packetsSent, 1)
-		time.Sleep(time.Millisecond*10)
+		for i := 0; i < 10; i++ {
+			conn.WriteToUDP(packetData[:], serverAddress)
+		}
+		atomic.AddUint64(&packetsSent, 10)
+		time.Sleep(time.Millisecond*100)
 	}
 }

@@ -418,7 +418,7 @@ resource "google_compute_instance" "backend" {
   }
 
   metadata = {
-    startup-script = <<-EOF
+    startup-script = <<-EOF2
     #!/bin/bash
     NEEDRESTART_SUSPEND=1 apt update -y
     NEEDRESTART_SUSPEND=1 apt upgrade -y
@@ -441,7 +441,7 @@ resource "google_compute_instance" "backend" {
     sysctl -w net.core.wmem_max=1000000000
     systemctl daemon-reload
     systemctl start backend.service
-    EOF
+    EOF2
   }
 
   service_account {
