@@ -110,7 +110,7 @@ func runServerThread(threadIndex int) {
 
 		if index == BlockSize {
 			go func(request []byte) {
-			    httpClient := &http.Client{Transport: &http.Transport{MaxIdleConnsPerHost: 1000}, Timeout: 1 * time.Second}
+			    httpClient := &http.Client{Transport: &http.Transport{MaxIdleConnsPerHost: 1000}, Timeout: 10 * time.Second}
 				response := PostBinary(httpClient, backendURL, request)
 				if len(response) == ResponseSize * RequestsPerBlock {
 					responseIndex := 0
