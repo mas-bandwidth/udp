@@ -2,7 +2,7 @@ package main
 
 import (
 	"fmt"
-	// "net"
+	"net"
 	"strconv"
 	"sync"
 	"sync/atomic"
@@ -49,7 +49,7 @@ func main() {
 
 	interfaceIndex := -1
 	for _, iface := range interfaces {
-		if iface.Name == linkName {
+		if iface.Name == networkDevice {
 			interfaceIndex = iface.Index
 			break
 		}
@@ -70,13 +70,13 @@ func main() {
 				os.Exit(1)
 			}
 			defer program.Close()
-			if err := program.Attach(Ifindex); err != nil {
+			if err := program.Attach(interfaceIndex); err != nil {
 				fmt.Printf("error: failed to attach xdp program to interface: %v\n", err)
 				os.Exit(1)
 			}
-			defer program.Detach(Ifindex)
+			defer program.Detach(interfaceIndex)
 
-			xsk, err := xdp.NewSocket(Ifindex, queueId, nil)
+			xsk, err := xdp.NewSocket(interfaceIndex, queueId, nil)
 			if err != nil {
 				fmt.Printf("error: failed to create an xdp socket: %v\n", err)
 				os.Exit(1)
@@ -97,10 +97,10 @@ func main() {
 				}
 
 				if n := xsk.NumFreeFillSlots(); n > 0 {
-					xsk.Fill(xsk.GetDescs(n, true))
+					xsk.Fill(xsk.GetDescs(n))
 				}
 
-				numRx, numCompl, err := xsk.Poll(-1)
+				numRx, _, err := xsk.Poll(-1)
 				if err != nil {
 					panic(err)
 				}
