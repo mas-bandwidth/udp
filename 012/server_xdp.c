@@ -108,11 +108,13 @@ SEC("server_xdp") int server_xdp_filter( struct xdp_md *ctx )
                             if ( payload_bytes == 100 )
                             {
                                 // todo: fnv1a 64bit
+                                debug_printf("100 byte packet");
                                 bpf_xdp_adjust_tail( ctx, -( payload_bytes - 8 ) );
                                 return XDP_TX;
                             }
                             else
                             {
+                                debug_printf("wrong packet size");
                                 return XDP_DROP;
                             }
                         }
