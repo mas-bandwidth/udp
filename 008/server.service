@@ -3,7 +3,6 @@ Description=UDP Server Service
 
 [Service]
 ExecStart=/app/server ens3
-EnvironmentFile=/app/server.env
 Restart=always
 RestartSec=30
 TimeoutStopSec=90
