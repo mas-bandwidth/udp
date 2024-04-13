@@ -271,6 +271,12 @@ resource "google_compute_instance_template" "client" {
     NUM_CLIENTS=1000
     SERVER_ADDRESS=${google_compute_instance.server.network_interface[0].network_ip}:40000
     EOF
+    cat <<EOF > /etc/sysctl.conf
+    net.core.rmem_max=1000000000
+    net.core.wmem_max=1000000000
+    net.core.netdev_max_backlog=10000
+    EOF
+    sysctl -p
     cp client.service /etc/systemd/system/client.service
     systemctl daemon-reload
     systemctl start client.service
@@ -360,7 +366,15 @@ resource "google_compute_instance" "server" {
     cat <<EOF > /app/server.env
     BACKEND_ADDRESS=${google_compute_instance.backend.network_interface[0].network_ip}:50000
     EOF
+    cat <<EOF > /etc/sysctl.conf
+    net.core.rmem_max=1000000000
+    net.core.wmem_max=1000000000
+    net.core.netdev_max_backlog=10000
+    EOF
+    sysctl -p
     cp server.service /etc/systemd/system/server.service
+    sysctl -w net.core.rmem_max=1000000000
+    sysctl -w net.core.wmem_max=1000000000
     systemctl daemon-reload
     systemctl start server.service
     EOF2
@@ -416,7 +430,15 @@ resource "google_compute_instance" "backend" {
     export HOME=/app
     go get
     go build backend.go
+    cat <<EOF > /etc/sysctl.conf
+    net.core.rmem_max=1000000000
+    net.core.wmem_max=1000000000
+    net.core.netdev_max_backlog=10000
+    EOF
+    sysctl -p
     cp backend.service /etc/systemd/system/backend.service
+    sysctl -w net.core.rmem_max=1000000000
+    sysctl -w net.core.wmem_max=1000000000
     systemctl daemon-reload
     systemctl start backend.service
     EOF
