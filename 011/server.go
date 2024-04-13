@@ -43,7 +43,7 @@ func main() {
 				panic(err)
 			}
 
-			xsk, err := xdp.NewSocket(link.Attrs().Index, queueId)
+			xsk, err := xdp.NewSocket(link.Attrs().Index, queueId, nil)
 			if err != nil {
 				panic(err)
 			}
@@ -74,6 +74,8 @@ func main() {
 
 	ticker := time.NewTicker(time.Second)
  
+	prev_received := uint64(0)
+
  	for {
 		select {
 		case <-termChan:

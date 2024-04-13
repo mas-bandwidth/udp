@@ -346,10 +346,6 @@ resource "google_compute_instance" "server" {
     }
   }
 
-  network_performance_config {
-    total_egress_bandwidth_tier = "TIER_1"
-  }
-
   metadata = {
     startup-script = <<-EOF2
     #!/bin/bash
