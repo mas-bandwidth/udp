@@ -1,6 +1,8 @@
-# 009
+# 010
 
-Bring back the server <-> backend HTTP comms in google cloud.
+The only way to pass this test is to break the rules of the test.
+
+Drop the server <-> backend HTTP requests and switch from Golang to XDP.
 
 To run:
 
@@ -11,44 +13,36 @@ terraform apply
 
 Result:
 
-BOOM.
+<img width="1536" alt="image" src="https://github.com/mas-bandwidth/udp/assets/696656/5b491871-d1d7-4b10-9aca-12328b49b1f2">
 
-<img width="1613" alt="image" src="https://github.com/mas-bandwidth/udp/assets/696656/b89211ec-6230-47ca-8bdc-03611b95f262">
+We can now run 100k clients for each c3-highcpu-44 instance. This is a 20X cost saving from $4,811,140 USD per-month to $240,557 for the VMs.
 
-We're simply asking too much of the HTTP client. It can't keep up with the UDP packets.
+But there are still the egress bandwidth charges, and these dominate. Surely at such a scale, the egress bandwidth price would be greatly reduced with sales negotiations with Google Cloud, but let's go a step further.
 
-10k players, 100 packets per-second = 10,000 * 100 = 1,000,000 UDP packets per-second.
+Let's run the system in bare metal.
 
-We've already fixed it so it's not a HTTP requests per-second problem. Batching 1000 UDP packets, per-HTTP request, we turn it into 1000 requests per-second, but... each request is 1000 * 100 bytes = 100 kilobytes long.
+<img width="1348" alt="Screenshot 2024-04-14 at 10 06 40 AM" src="https://github.com/mas-bandwidth/udp/assets/696656/23e29eee-645c-4e61-bf7e-c4471d33f4f4">
 
-At this point it's clear this is an impossible problem. Or at least a problem that is waaaaaaaaaaaay outside the scope of anything reasonable to implement for a take home programmer test.
+I love https://datapacket.com. They are an excellent bare metal hosting company. Picking the fattest bare metal server they have with a 40GB NIC, there are no ingress or egress bandwidth charges.
 
-It's entirely IO bound at this point, not anything we can fix by writing code. Indeed, attempting to write code past this point would be an exercise in frustration without understanding that it's IO bound.
+On bare metal with a 40GB NIC we can handle the amount of traffic easily with XDP. The XDP program runs in native mode, whereas on google cloud it runs in SKB mode, so it's slower. There's also no virtualization overhead. All the cores on the bare metal are dedicated exclusively to doing the XDP work and you can tune the system as needed.
 
-As next steps, the logical next step is to fix the IO issue by adding a second virtual NIC to the server VM, and a virtual network and subnetwork just for HTTP traffic. This would fix the IO boundness, and then we have a solution that conservatively handles 10k clients with two c3-highcpu-44 VMs, one for the server and one for the backend.
+The total cost for 1M clients is now: $8,430 USD per-month.
 
-Since the expected load is 1M clients, we can then scale this horizontally to get an estimate of the cost to run the VMs in google cloud:
+$6,076,036 / $8,430 = 720X reduction in cost.
 
-100 * 20 * c3-highcpu-44 = 2000 * $2405.57 = $4,811,140 USD per-month just for VMs.
+Can we take it even further? Yes!
 
-We also need to consider egress bandwidth. It's roughly 10c per-GB egress. The response packets are just 8 bytes for the hash, but we need to add 28 bytes for IP and UDP header. Not sure if I should add ethernet header or not to the calculation, so let's just go with 36 bytes per-response UDP packet.
+If we needed to scale up more, at some point XDP is not fast enough. 
 
-1M players * 100 response packets per-second * 36 bytes = 100M * 36 bytes = 100,000,000 * 36 bytes/sec = 3,600,000,000 bytes/sec = 3.6GB/sec.
+We could purchase and install a netronome NIC that would run the XDP hash function in hardware. Alternatively, we could explore implementing the hash with with programmable NIC using P4.
 
-2,592,000 seconds in a month, so 2,592,000 * 3.6GB = 9,331,200 GB per-month.
+If we need to scale up even further, perhaps another 100 - 1000X, we could scale out horizontally with multiple bare metal machines with NICs that have onboard FPGA and implement the hash there. _Although, this is mildly insane._
 
-At $0.1 per-GB, we get an egress bandwidth charge of: $933,120 USD per-month.
+What's the moral of the story here?
 
-But this is not all, we also need to consider that we'll put a load balancer in front of the UDP server. (Assume we can pin each load balancer to a backend instance, and those are not load balanced).
+Rewriting it in rust won't help you. 
 
-Ingress traffic to load balancers is billed at ~1c per-GB on google cloud.
-
-We have 28+100 bytes per-UDP packet, and 1M players sending 100 packets per-second. 
-
-1M players * 100 request packets per-second * 128 bytes = 12.8GB/sec.
-
-2,592,000 seconds in a month, so 2,592,000 * 12.8GB = 9,331,200 GB per-month.
-
-Ingress traffic to the UDP load balance is $331,776 USD per-month.
-
-Total cost: $6,076,036 USD per-month.
+1. Work out how much it costs
+2. Prototype it, load test it and really understand the problem
+3. Break all the rules :)
