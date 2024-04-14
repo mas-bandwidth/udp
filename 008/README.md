@@ -11,4 +11,4 @@ terraform apply
 
 Result:
 
-We can still hit 10k clients, but at a much lower CPU cost.
+We can still hit 10k - 25k clients, but at a much lower CPU cost.
