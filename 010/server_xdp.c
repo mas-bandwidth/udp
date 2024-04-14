@@ -104,21 +104,15 @@ SEC("server_xdp") int server_xdp_filter( struct xdp_md *ctx )
                         {
                             __u8 * payload = (void*) udp + sizeof(struct udphdr);
                             int payload_bytes = data_end - (void*)payload;
-                            if ( payload_bytes == 100 && (void*)payload + 100 <= data_end )    // IMPORTANT: for the verifier
+                            if ( payload_bytes == 100 && (void*)payload + i <= data_end )    // IMPORTANT: for the verifier
                             {
                                 reflect_packet( data, 8 );
                                 __u64 hash = 0xCBF29CE484222325;
-                                hash ^= payload[0]; hash *= 0x00000100000001B3;
-                                hash ^= payload[1]; hash *= 0x00000100000001B3;
-                                hash ^= payload[2]; hash *= 0x00000100000001B3;
-                                hash ^= payload[3]; hash *= 0x00000100000001B3;
-                                hash ^= payload[4]; hash *= 0x00000100000001B3;
-                                hash ^= payload[5]; hash *= 0x00000100000001B3;
-                                hash ^= payload[6]; hash *= 0x00000100000001B3;
-                                hash ^= payload[7]; hash *= 0x00000100000001B3;
-                                hash ^= payload[8]; hash *= 0x00000100000001B3;
-                                hash ^= payload[9]; hash *= 0x00000100000001B3;
-                                bpf_xdp_adjust_tail( ctx, -( payload_bytes - 8 ) );
+                                for ( int i = 0; i < 100; i++ )
+                                {
+                                    hash ^= payload[i];
+                                    hash *= 0x00000100000001B3;
+                                }
                                 payload[0] = ( hash       ) & 0xFF;
                                 payload[1] = ( hash >> 8  ) & 0xFF;
                                 payload[2] = ( hash >> 16 ) & 0xFF;
@@ -127,6 +121,7 @@ SEC("server_xdp") int server_xdp_filter( struct xdp_md *ctx )
                                 payload[5] = ( hash >> 40 ) & 0xFF;
                                 payload[6] = ( hash >> 48 ) & 0xFF;
                                 payload[7] = ( hash >> 56 );
+                                bpf_xdp_adjust_tail( ctx, -( payload_bytes - 8 ) );
                                 return XDP_TX;
                             }
                             else
