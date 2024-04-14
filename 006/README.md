@@ -1,6 +1,6 @@
 # 006
 
-Increase to batches of 1000, don't use channels, reduce copies.
+Batch 1000 UDP packets per-http request.
 
 To run:
 
