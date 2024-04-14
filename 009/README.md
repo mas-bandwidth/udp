@@ -25,11 +25,11 @@ At this point it's clear this is an impossible problem. Or at least a problem th
 
 It's entirely IO bound at this point, not anything we can fix by writing code. Indeed, attempting to write code past this point would be an exercise in frustration without understanding that it's IO bound.
 
-As next steps, the logical next step is to fix the IO issue by adding a second virtual NIC to the server VM, and a virtual network and subnetwork just for HTTP traffic. This would fix the IO boundness, and then we have a solution that conservatively handles 10k clients with two c3-highcpu-44 VMs, one for the server and one for the backend.
+As to next steps, the logical next step is to fix the IO issue by adding a second virtual NIC to the server VM, and a virtual network and subnetwork just for HTTP traffic. This would fix the IO boundness, and then we have a solution that conservatively handles 10k clients with two c3-highcpu-44 VMs, one for the server and one for the backend.
 
 Since the expected load is 1M clients, we can then scale this horizontally to get an estimate of the cost to run the VMs in google cloud:
 
-100 * 2 * c3-highcpu-44 = 200 * $2405.57 = $481,114 USD per-month just for VMs.
+Since we can do 10k clients with 2 c3-highcpu-44 machines, and we need 1M clients: we need 100 * 2 * c3-highcpu-44 = 200 * $2405.57 = $481,114 USD per-month just for VMs.
 
 We also need to consider egress bandwidth. It's roughly 10c per-GB egress. The response packets are just 8 bytes for the hash, but we need to add 28 bytes for IP and UDP header. Not sure if I should add ethernet header or not to the calculation, so let's just go with 36 bytes per-response UDP packet.
 
