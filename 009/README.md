@@ -11,6 +11,4 @@ terraform apply
 
 Result:
 
-BOOM.
 
-We're firing off too many HTTP requests. Each request opens a new socket. We quickly run out of open sockets.

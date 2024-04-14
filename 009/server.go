@@ -16,6 +16,10 @@ import (
 const NumThreads = 64
 const ServerPort = 40000
 const SocketBufferSize = 1024*1024*1024
+const RequestsPerBlock = 1000
+const RequestSize = 4 + 2 + 100
+const BlockSize = RequestsPerBlock * RequestSize
+const ResponseSize = 4 + 2 + 8
 
 var socket [NumThreads]*net.UDPConn
 
@@ -76,11 +80,31 @@ func runServerThread(threadIndex int) {
 		panic(fmt.Sprintf("could not set socket write buffer size: %v", err))
 	}
 
-	buffer := make([]byte, 1500)
+	index := 0
+	block := make([]byte, BlockSize)
 
 	for {
 
-		packetBytes, from, err := conn.ReadFromUDP(buffer[:])
+		if index == BlockSize {
+			go func(request []byte) {
+			    httpClient := &http.Client{Transport: &http.Transport{MaxIdleConnsPerHost: 1000}, Timeout: 10 * time.Second}
+				response := PostBinary(httpClient, backendURL, request)
+				if len(response) == ResponseSize * RequestsPerBlock {
+					responseIndex := 0
+					for i := 0; i < RequestsPerBlock; i++ {
+						ip := response[responseIndex:responseIndex+4]
+						port := binary.LittleEndian.Uint16(response[responseIndex+4:responseIndex+6])
+						from := net.UDPAddr{IP: ip, Port: int(port)}
+						socket[threadIndex].WriteToUDP(response[responseIndex+6:responseIndex+6+8], &from)
+						responseIndex += ResponseSize
+					}
+				}
+			}(block)
+			block = make([]byte, BlockSize)
+			index = 0
+		}
+
+		packetBytes, from, err := conn.ReadFromUDP(block[index+6:index+6+100])
 		if err != nil {
 			break
 		}
@@ -89,8 +113,11 @@ func runServerThread(threadIndex int) {
 			continue
 		}
 
-		var dummy [8]byte 
-		socket[threadIndex].WriteToUDP(dummy[:], from)
+		copy(block[index:], from.IP.To4())
+
+		binary.LittleEndian.PutUint16(block[index+4:index+6], uint16(from.Port))
+		
+		index += RequestSize
 	}	
 }
 
