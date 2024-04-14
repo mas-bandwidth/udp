@@ -310,7 +310,7 @@ resource "google_compute_instance" "server" {
 
   name         = "server-${var.tag}"
   project      = google_project.udp.project_id
-  machine_type = "c3-highcpu-176"
+  machine_type = "c3-highcpu-44"
   zone         = var.google_zone
   tags         = ["allow-ssh", "allow-udp"]
 
@@ -328,10 +328,6 @@ resource "google_compute_instance" "server" {
     access_config {
       nat_ip = google_compute_address.server_address.address
     }
-  }
-
-  network_performance_config {
-    total_egress_bandwidth_tier = "TIER_1"
   }
 
   metadata = {
