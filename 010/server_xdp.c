@@ -103,7 +103,7 @@ SEC("server_xdp") int server_xdp_filter( struct xdp_md *ctx )
                         if ( udp->dest == __constant_htons(40000) )
                         {
                             __u8 * payload = (void*) udp + sizeof(struct udphdr);
-                            int payload_bytes = data_end - payload;
+                            int payload_bytes = data_end - (void*)payload;
                             if ( payload_bytes == 100 && (void*)payload + 100 <= data_end )    // IMPORTANT: for the verifier
                             {
                                 reflect_packet( data, 8 );
