@@ -1,6 +1,6 @@
 # 006
 
-Increase to batches of 1000, don't use channels, and reduce copies.
+Increase to batches of 1000, don't use channels, reduce copies.
 
 To run:
 
@@ -54,5 +54,5 @@ done.
 
 As close as I can get. I'm out of ideas for making the HTTP stuff any faster. I think I'm hitting IO limits on my machine.
 
-It's time to start going horizontal on google cloud, so we get the correct hashing so multiple cores get used to process packets...
+It's time to start going horizontal for the clients, so we have different source IP addresses hashing to cores on the server.
 
