@@ -13,4 +13,4 @@ You'll need significant quota for n1 cores and c3 instances in your google cloud
 
 Result:
 
-We can still hit 10k clients, now at a much lower cost.
+We can still hit 10k clients, but now at a much lower cost.

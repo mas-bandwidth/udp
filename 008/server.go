@@ -8,44 +8,20 @@ import (
 	"os"
 	"os/signal"
 	"syscall"
-	"time"
 	"bytes"
 	"net/http"
-	"encoding/binary"
 	"golang.org/x/sys/unix"
 )
 
 const NumThreads = 64
 const ServerPort = 40000
 const SocketBufferSize = 1024*1024*1024
-const RequestsPerBlock = 100
-const RequestSize = 4 + 2 + 100
-const BlockSize = RequestsPerBlock * RequestSize
-const ResponseSize = 4 + 2 + 8
 
 var socket [NumThreads]*net.UDPConn
-
-var backendAddress net.UDPAddr
-
-func GetAddress(name string, defaultValue string) net.UDPAddr {
-	valueString, ok := os.LookupEnv(name)
-	if !ok {
-	    valueString = defaultValue
-	}
-	value, err := net.ResolveUDPAddr("udp", valueString)
-	if err != nil {
-		panic(fmt.Sprintf("invalid address in envvar %s", name))
-	}
-	return *value
-}
 
 func main() {
 
 	fmt.Printf("starting %d server threads on port %d\n", NumThreads, ServerPort)
-
-	backendAddress = GetAddress("BACKEND_ADDRESS", "127.0.0.1:50000")
-
-	fmt.Printf("backend address is %s\n", backendAddress.String())
 
 	for i := 0; i < NumThreads; i++ {
 		createServerSocket(i)
@@ -88,8 +64,6 @@ func createServerSocket(threadIndex int) {
 
 func runServerThread(threadIndex int) {
 
-	backendURL := fmt.Sprintf("http://%s/hash", backendAddress.String())
-
 	conn := socket[threadIndex]
 
 	defer conn.Close()
@@ -102,32 +76,11 @@ func runServerThread(threadIndex int) {
 		panic(fmt.Sprintf("could not set socket write buffer size: %v", err))
 	}
 
-
-	index := 0
-	block := make([]byte, BlockSize)
+	buffer := make([]byte, 1500)
 
 	for {
 
-		if index == BlockSize {
-			go func(request []byte) {
-			    httpClient := &http.Client{Transport: &http.Transport{MaxIdleConnsPerHost: 1000}, Timeout: 10 * time.Second}
-				response := PostBinary(httpClient, backendURL, request)
-				if len(response) == ResponseSize * RequestsPerBlock {
-					responseIndex := 0
-					for i := 0; i < RequestsPerBlock; i++ {
-						ip := response[responseIndex:responseIndex+4]
-						port := binary.LittleEndian.Uint16(response[responseIndex+4:responseIndex+6])
-						from := net.UDPAddr{IP: ip, Port: int(port)}
-						socket[threadIndex].WriteToUDP(response[responseIndex+6:responseIndex+6+8], &from)
-						responseIndex += ResponseSize
-					}
-				}
-			}(block)
-			block = make([]byte, BlockSize)
-			index = 0
-		}
-
-		packetBytes, from, err := conn.ReadFromUDP(block[index+6:index+6+100])
+		packetBytes, from, err := conn.ReadFromUDP(buffer[:])
 		if err != nil {
 			break
 		}
@@ -136,11 +89,8 @@ func runServerThread(threadIndex int) {
 			continue
 		}
 
-		copy(block[index:], from.IP.To4())
-
-		binary.LittleEndian.PutUint16(block[index+4:index+6], uint16(from.Port))
-		
-		index += RequestSize
+		var dummy [8]byte 
+		socket[threadIndex].WriteToUDP(dummy[:], from)
 	}	
 }
 
