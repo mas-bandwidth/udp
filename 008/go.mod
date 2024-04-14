@@ -1,1 +1,1 @@
-module github.com/mas-bandwidth/udp/010
+module github.com/mas-bandwidth/udp/008
