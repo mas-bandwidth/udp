@@ -1,6 +1,6 @@
 # 007
 
-Go to google cloud with terraform, run 10 n1-standard-8 VMs horizontally scaling to get 1K players each against a c3-highcpu-176
+Go to google cloud with terraform, run 10 n1-standard-8 VMs with 1000 clients each to get 10K players each against a c3-highcpu-176
 
 To run:
 
@@ -27,4 +27,3 @@ The problem is that with c3 class machines:
 https://cloud.google.com/compute/docs/network-bandwidth
 
 This means even though we have a massive amount of cores, only 16 are actively available to receive packets. When we overload these, UDP packets are dropped on receive.
-
