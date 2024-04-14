@@ -76,6 +76,14 @@ data "local_file" "server_service" {
   filename = "server.service"
 }
 
+data "local_file" "backend_go" {
+  filename = "backend.go"
+}
+
+data "local_file" "backend_service" {
+  filename = "backend.service"
+}
+
 data "local_file" "go_mod" {
   filename = "go.mod"
 }
@@ -98,6 +106,14 @@ data "archive_file" "source_zip" {
   source {
     filename = "server.service"
     content  = data.local_file.server_service.content
+  }
+  source {
+    filename = "backend.go"
+    content  = data.local_file.backend_go.content
+  }
+  source {
+    filename = "backend.service"
+    content  = data.local_file.backend_service.content
   }
   source {
     filename = "go.mod"
@@ -350,10 +366,70 @@ resource "google_compute_instance" "server" {
     EOF
     sysctl -p
     cp server.service /etc/systemd/system/server.service
-    sysctl -w net.core.rmem_max=1000000000
-    sysctl -w net.core.wmem_max=1000000000
     systemctl daemon-reload
     systemctl start server.service
+    EOF2
+  }
+
+  service_account {
+    email  = google_service_account.udp_runtime.email
+    scopes = ["cloud-platform"]
+  }
+}
+
+# ----------------------------------------------------------------------------------------
+
+resource "google_compute_address" "backend_address" {
+  name    = "backend-${var.tag}-address"
+  project = google_project.udp.project_id
+}
+
+resource "google_compute_instance" "backend" {
+
+  name         = "backend-${var.tag}"
+  project      = google_project.udp.project_id
+  machine_type = "c3-highcpu-44"
+  zone         = var.google_zone
+  tags         = ["allow-ssh", "allow-udp"]
+
+  allow_stopping_for_update = true
+
+  boot_disk {
+    initialize_params {
+      image = "ubuntu-os-cloud/ubuntu-minimal-2204-lts"
+    }
+  }
+
+  network_interface {
+    network    = google_compute_network.udp.id
+    subnetwork = google_compute_subnetwork.udp.id
+    access_config {
+      nat_ip = google_compute_address.backend_address.address
+    }
+  }
+
+  metadata = {
+    startup-script = <<-EOF2
+    #!/bin/bash
+    NEEDRESTART_SUSPEND=1 apt update -y
+    NEEDRESTART_SUSPEND=1 apt upgrade -y
+    NEEDRESTART_SUSPEND=1 apt install golang-go unzip -y
+    mkdir /app
+    cd /app
+    gsutil cp gs://${var.google_org_id}_udp_source/source-${var.tag}.zip .
+    unzip *.zip
+    export HOME=/app
+    go get
+    go build backend.go
+    cat <<EOF > /etc/sysctl.conf
+    net.core.rmem_max=1000000000
+    net.core.wmem_max=1000000000
+    net.core.netdev_max_backlog=10000
+    EOF
+    sysctl -p
+    cp backend.service /etc/systemd/system/backend.service
+    systemctl daemon-reload
+    systemctl start backend.service
     EOF2
   }
 

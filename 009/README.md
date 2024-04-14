@@ -1,6 +1,6 @@
-# 008
+# 009
 
-Reduce server to c3-highcpu-44, since we only really get 16 threads per-NIC to receive packets with.
+Bring back the server <-> backend HTTP comms in google cloud.
 
 To run:
 
@@ -11,4 +11,6 @@ terraform apply
 
 Result:
 
-We can still hit 10k clients, but at a much lower CPU cost.
+BOOM.
+
+We're firing off too many HTTP requests. Each request opens a new socket. We quickly run out of open sockets.
