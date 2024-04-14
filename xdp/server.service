@@ -1,0 +1,9 @@
+[Unit]
+Description=UDP Server Service
+
+[Service]
+ExecStart=/app/server ens3
+WorkingDirectory=/app
+Restart=always
+RestartSec=30
+TimeoutStopSec=90
