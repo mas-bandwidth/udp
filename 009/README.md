@@ -29,7 +29,7 @@ As next steps, the logical next step is to fix the IO issue by adding a second v
 
 Since the expected load is 1M clients, we can then scale this horizontally to get an estimate of the cost to run the VMs in google cloud:
 
-100 * 20 * c3-highcpu-44 = 2000 * $2405.57 = $4,811,140 USD per-month just for VMs.
+100 * 2 * c3-highcpu-44 = 200 * $2405.57 = $481,114 USD per-month just for VMs.
 
 We also need to consider egress bandwidth. It's roughly 10c per-GB egress. The response packets are just 8 bytes for the hash, but we need to add 28 bytes for IP and UDP header. Not sure if I should add ethernet header or not to the calculation, so let's just go with 36 bytes per-response UDP packet.
 
@@ -39,7 +39,7 @@ We also need to consider egress bandwidth. It's roughly 10c per-GB egress. The r
 
 At $0.1 per-GB, we get an egress bandwidth charge of: $933,120 USD per-month.
 
-But this is not all, we also need to consider that we'll put a load balancer in front of the UDP server. (Assume we can pin each load balancer to a backend instance, and those are not load balanced).
+But this is not all, we also need to consider that we'll put a load balancer in front of the UDP servers. (Assume we can pair each server to a backend instance, so there are no load balancer costs between the server and backend).
 
 Ingress traffic to load balancers is billed at ~1c per-GB on google cloud.
 
@@ -51,4 +51,4 @@ We have 28+100 bytes per-UDP packet, and 1M players sending 100 packets per-seco
 
 Ingress traffic to the UDP load balancer is $331,776 USD per-month.
 
-Total cost: $6,076,036 USD per-month.
+Total cost: $1,746,010 USD per-month.
