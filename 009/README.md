@@ -17,7 +17,7 @@ BOOM.
 
 We're simply asking too much of the HTTP client. It can't keep up with the UDP packets.
 
-10k players, 100 packets per-second = 10,000 * 100 = 1,000,000 UDP packets per-second.
+10k clients, 100 packets per-second = 10,000 * 100 = 1,000,000 UDP packets per-second.
 
 We've already fixed it so it's not a HTTP requests per-second problem. Batching 1000 UDP packets, per-HTTP request, we turn it into 1000 requests per-second, but... each request is 1000 * 100 bytes = 100 kilobytes long.
 
@@ -33,7 +33,7 @@ Since we can do 10k clients with 2 c3-highcpu-44 machines, and we need 1M client
 
 We also need to consider egress bandwidth. It's roughly 10c per-GB egress. The response packets are just 8 bytes for the hash, but we need to add 28 bytes for IP and UDP header. Not sure if I should add ethernet header or not to the calculation, so let's just go with 36 bytes per-response UDP packet.
 
-1M players * 100 response packets per-second * 36 bytes = 100M * 36 bytes = 100,000,000 * 36 bytes/sec = 3,600,000,000 bytes/sec = 3.6GB/sec.
+1M clients * 100 response packets per-second * 36 bytes = 100M * 36 bytes = 100,000,000 * 36 bytes/sec = 3,600,000,000 bytes/sec = 3.6GB/sec.
 
 2,592,000 seconds in a month, so 2,592,000 * 3.6GB = 9,331,200 GB per-month.
 
@@ -43,9 +43,9 @@ But this is not all, we also need to consider that we'll put a load balancer in 
 
 Ingress traffic to load balancers is billed at ~1c per-GB on google cloud.
 
-We have 28+100 bytes per-UDP packet, and 1M players sending 100 packets per-second. 
+We have 28+100 bytes per-UDP packet, and 1M clients sending 100 packets per-second. 
 
-1M players * 100 request packets per-second * 128 bytes = 12.8GB/sec.
+1M clients * 100 request packets per-second * 128 bytes = 12.8GB/sec.
 
 2,592,000 seconds in a month, so 2,592,000 * 12.8GB = 9,331,200 GB per-month.
 
