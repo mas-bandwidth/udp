@@ -294,7 +294,7 @@ resource "google_compute_instance_template" "client" {
 }
 
 resource "google_compute_region_instance_group_manager" "client" {
-  target_size               = 1
+  target_size               = 100
   name                      = "client"
   project                   = google_project.udp.project_id
   region                    = var.google_region
