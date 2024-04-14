@@ -41,9 +41,7 @@ We could purchase and install a netronome NIC that would run the XDP hash functi
 
 If we need to scale up even further, perhaps another 100 - 1000X, we could scale out horizontally with multiple bare metal machines with NICs that have onboard FPGA and implement the hash there. _Although, this is mildly insane._
 
-What's the moral of the story here?
-
-Rewriting it in rust won't help you. 
+What's the moral of the story?
 
 1. Work out how much it costs
 2. Prototype it, load test it and really understand the problem
