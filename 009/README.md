@@ -13,7 +13,7 @@ Result:
 
 BOOM.
 
-
+<img width="1613" alt="image" src="https://github.com/mas-bandwidth/udp/assets/696656/b89211ec-6230-47ca-8bdc-03611b95f262">
 
 We're simply asking too much of the HTTP client. It can't keep up with the UDP packets.
 
