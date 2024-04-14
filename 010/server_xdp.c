@@ -108,11 +108,16 @@ SEC("server_xdp") int server_xdp_filter( struct xdp_md *ctx )
                             {
                                 reflect_packet( data, 8 );
                                 __u64 hash = 0xCBF29CE484222325;
-                                for ( int i = 0; i < 100; i++ )
-                                {
-                                    hash ^= payload[i];
-                                    hash *= 0x00000100000001B3;
-                                }
+                                hash ^= payload[0]; hash *= 0x00000100000001B3;
+                                hash ^= payload[1]; hash *= 0x00000100000001B3;
+                                hash ^= payload[2]; hash *= 0x00000100000001B3;
+                                hash ^= payload[3]; hash *= 0x00000100000001B3;
+                                hash ^= payload[4]; hash *= 0x00000100000001B3;
+                                hash ^= payload[5]; hash *= 0x00000100000001B3;
+                                hash ^= payload[6]; hash *= 0x00000100000001B3;
+                                hash ^= payload[7]; hash *= 0x00000100000001B3;
+                                hash ^= payload[8]; hash *= 0x00000100000001B3;
+                                hash ^= payload[9]; hash *= 0x00000100000001B3;
                                 bpf_xdp_adjust_tail( ctx, -( payload_bytes - 8 ) );
                                 payload[0] = ( hash       ) & 0xFF;
                                 payload[1] = ( hash >> 8  ) & 0xFF;
