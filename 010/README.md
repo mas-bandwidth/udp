@@ -41,4 +41,4 @@ If we need to scale up even further, perhaps another 100 - 1000X, we could scale
 
 What's the moral of the story here?
 
-Rewriting it in rust won't help you. First, work out how much it costs, prototype it, load test in, and don't be afraid to break the rules :)
+Rewriting it in rust won't help you. First, work out how much it costs, prototype it, load test it, and don't be afraid to break the rules to get it to scale the way you need it :)
