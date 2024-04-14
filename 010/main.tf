@@ -80,14 +80,6 @@ data "local_file" "server_service" {
   filename = "server.service"
 }
 
-data "local_file" "backend_go" {
-  filename = "backend.go"
-}
-
-data "local_file" "backend_service" {
-  filename = "backend.service"
-}
-
 data "local_file" "go_mod" {
   filename = "go.mod"
 }
@@ -118,14 +110,6 @@ data "archive_file" "source_zip" {
   source {
     filename = "server.service"
     content  = data.local_file.server_service.content
-  }
-  source {
-    filename = "backend.go"
-    content  = data.local_file.backend_go.content
-  }
-  source {
-    filename = "backend.service"
-    content  = data.local_file.backend_service.content
   }
   source {
     filename = "go.mod"
@@ -401,9 +385,6 @@ resource "google_compute_instance" "server" {
       cd /app
       make
 
-      cat <<EOF > /app/server.env
-      BACKEND_ADDRESS=${google_compute_instance.backend.network_interface[0].network_ip}:50000
-      EOF
       cat <<EOF > /etc/sysctl.conf
       net.core.rmem_max=1000000000
       net.core.wmem_max=1000000000
