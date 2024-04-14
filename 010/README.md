@@ -17,7 +17,7 @@ Result:
 
 We can now run 100k clients for each c3-highcpu-44 instance. This is a 20X cost saving from $4,811,140 USD per-month to $240,557 for the VMs.
 
-But there are still the egress bandwidth charges, and these dominate. Surely at such a scale, the egress bandwidth would be greatly reduce, but let's go a step further.
+But there are still the egress bandwidth charges, and these dominate. Surely at such a scale, the egress bandwidth price would be greatly reduced with sales negotiations with Google Cloud, but let's go a step further.
 
 Let's run the system in bare metal.
 
