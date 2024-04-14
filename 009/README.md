@@ -31,8 +31,6 @@ Since the expected load is 1M clients, we can then scale this horizontally to ge
 
 100 * 20 * c3-highcpu-44 = 2000 * $2405.57 = $4,811,140 USD per-month just for VMs.
 
-But this isn't all. We'd need to load balance the managed instance group of server VMs. This costs $0.01USD per-GB roughly and applies to ingress traffic, not egress.
-
 We also need to consider egress bandwidth. It's roughly 10c per-GB egress. The response packets are just 8 bytes for the hash, but we need to add 28 bytes for IP and UDP header. Not sure if I should add ethernet header or not to the calculation, so let's just go with 36 bytes per-response UDP packet.
 
 1M players * 100 response packets per-second * 36 bytes = 100M * 36 bytes = 100,000,000 * 36 bytes/sec = 3,600,000,000 bytes/sec = 3.6GB/sec.
