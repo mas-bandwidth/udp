@@ -1,0 +1,8 @@
+[Unit]
+Description=UDP Server Service
+
+[Service]
+ExecStart=/app/server
+Restart=always
+RestartSec=30
+TimeoutStopSec=90
