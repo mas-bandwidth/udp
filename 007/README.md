@@ -11,6 +11,10 @@ terraform apply
 
 You'll need significant quota for n1 cores and c3 instances in your google cloud to be able to run. If you don't have it, edit the main.tf for different instance types.
 
+Result:
+
+![image](https://github.com/mas-bandwidth/udp/assets/696656/3db5afa7-ad3a-46c4-8f70-b702054f74fb)
+
 Even with the c3-highcpu-176 for the server, we can only get 10-25k clients max. Above this, UDP packets start to get dropped.
 
 You can see these drops on the server with:
