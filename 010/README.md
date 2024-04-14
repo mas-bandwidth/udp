@@ -15,7 +15,7 @@ Result:
 
 <img width="1536" alt="image" src="https://github.com/mas-bandwidth/udp/assets/696656/5b491871-d1d7-4b10-9aca-12328b49b1f2">
 
-We can now run 100k clients for each c3-highcpu-44 instance. This is a 20X cost saving from $4,811,140 USD per-month to $240,557 for the VMs.
+We can now run 100k clients for each c3-highcpu-44 instance, so we only need ten of them now instead of 200. This is a 20X cost saving from $481,114 USD per-month to $24,055 for the VMs.
 
 But there are still the egress bandwidth charges, and these dominate. Surely at such a scale, the egress bandwidth price would be greatly reduced with sales negotiations with Google Cloud, but let's go a step further.
 
@@ -31,7 +31,7 @@ More about XDP here: https://mas-bandwidth.com/xdp-for-game-programmers/
 
 The total cost for 1M clients is now: $8,430 USD per-month.
 
-$6,076,036 / $8,430 = 720X reduction in cost.
+$1,746,010 / $8,430 = 207X reduction in cost.
 
 Can we take it even further? Yes!
 
@@ -45,4 +45,4 @@ What's the moral of the story?
 
 1. Work out how much it costs
 2. Prototype it, load test it and really understand the problem
-3. Don't be afraid to break all the rules to get it to scale :)
+3. Don't be afraid to break the rules to get it to scale :)
