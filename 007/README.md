@@ -27,4 +27,3 @@ The problem is that with c3 class machines:
 https://cloud.google.com/compute/docs/network-bandwidth
 
 This means even though we have a massive amount of cores, only 16 are actively available to receive packets. When we overload these, UDP packets are dropped on receive.
-

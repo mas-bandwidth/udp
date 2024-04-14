@@ -10,7 +10,7 @@ import (
 )
 
 const BackendPort = 50000
-const RequestsPerBlock = 100
+const RequestsPerBlock = 1000
 const RequestSize = 4 + 2 + 100
 const ResponseSize = 4 + 2 + 8
 const BlockSize = RequestsPerBlock * RequestSize
@@ -28,13 +28,9 @@ func main() {
 func hash(w http.ResponseWriter, req *http.Request) {
 	request, err := io.ReadAll(req.Body)
 	if err != nil || len(request) != BlockSize {
-		// todo
-		fmt.Printf("wrong request size\n")
 		w.WriteHeader(http.StatusBadRequest)
 		return
 	}
-	// todo
-	fmt.Printf("processing request\n")
 	requestIndex := 0
 	responseIndex := 0
 	response := [ResponseSize*RequestsPerBlock]byte{}
