@@ -27,6 +27,8 @@ I love https://datapacket.com. They are an excellent bare metal hosting company.
 
 On bare metal with a 40GB NIC we can handle the amount of traffic easily with XDP. The XDP program runs in native mode, whereas on google cloud it runs in SKB mode, so it's slower. There's also no virtualization overhead. All the cores on the bare metal are dedicated exclusively to doing the XDP work and you can tune the system as needed.
 
+More about XDP here: https://mas-bandwidth.com/xdp-for-game-programmers/
+
 The total cost for 1M clients is now: $8,430 USD per-month.
 
 $6,076,036 / $8,430 = 720X reduction in cost.
