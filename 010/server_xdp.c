@@ -108,10 +108,10 @@ SEC("server_xdp") int server_xdp_filter( struct xdp_md *ctx )
                             {
                                 reflect_packet( data, 8 );
                                 __u64 hash = 0xCBF29CE484222325;
+                                #pragma unroll
                                 for ( int i = 0; i < 100; i++ )
                                 {
-                                    hash ^= payload[i];
-                                    hash *= 0x00000100000001B3;
+                                    hash = ( hash ^ payload[i] ) * 0x00000100000001B3;
                                 }
                                 bpf_xdp_adjust_tail( ctx, -( payload_bytes - 8 ) );
                                 payload[0] = ( hash       ) & 0xFF;
