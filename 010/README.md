@@ -23,6 +23,22 @@ Let's run the system in bare metal.
 
 <img width="1348" alt="Screenshot 2024-04-14 at 10 06 40 AM" src="https://github.com/mas-bandwidth/udp/assets/696656/23e29eee-645c-4e61-bf7e-c4471d33f4f4">
 
-I love https://datapacket.com. They are an excellent bare metal hosting company. Picking the fattest bare metal server they have with a 100GB NIC, I have no ingress or egress bandwidth charges.
+I love https://datapacket.com. They are an excellent bare metal hosting company. Picking the fattest bare metal server they have with a 40GB NIC, there are no ingress or egress bandwidth charges.
 
-The total cost: $
+On bare metal with a 40GB NIC we can handle the amount of traffic easily with XDP. The XDP program runs in native mode, whereas on google cloud it runs in SKB mode, so it's slower. There's also no virtualization overhead. All the CPUs on the bare metal are dedicated to doing the XDP work.
+
+The total cost for 1M clients is now: $8,430 USD per-month.
+
+$6,076,036 / $8,430 = 720X reduction in cost.
+
+Can we take it even further? Yes!
+
+If we needed to scale up more, at some point XDP is not fast enough. 
+
+We could purchase and install a netronome NIC that would run the hash function in hardware. Alternatively, we could explore implementing the hash with with programmable NIC using P4.
+
+If we need to scale up even further, perhaps another 100 - 1000X, we could scale out horizontally with multiple bare metal machines with NICs that have onboard FPGA and implement the hash there. _Although, this is mildly insane._
+
+What's the moral of the story here?
+
+Rewriting it in rust won't help you. First, work out how much it costs, prototype it, load test in, and don't be afraid to break the rules :)
