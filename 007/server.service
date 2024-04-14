@@ -3,8 +3,6 @@ Description=UDP Server Service
 
 [Service]
 ExecStart=/app/server
-EnvironmentFile=/app/server.env
 Restart=always
 RestartSec=30
 TimeoutStopSec=90
-LimitNOFILE=500000

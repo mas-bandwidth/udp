@@ -2,11 +2,7 @@
 
 Go to google cloud with terraform, run 10 n1-standard-8 VMs with 1000 clients each to get 10K players each against a c3-highcpu-176
 
-Increase number of open file limit in server.service:
-
-```
-LimitNOFILE=500000
-```
+Remove the server <-> backend comms for the moment, and focus on the client to server UDP packets.
 
 To run:
 
