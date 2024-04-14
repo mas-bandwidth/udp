@@ -43,6 +43,6 @@ What's the moral of the story here?
 
 Rewriting it in rust won't help you. 
 
-1. Work out how much it costs,
-2. Prototype it, load test it and verify assumptions
-3. Don't be afraid to break the rules to get it to scale the way you want :)
+1. Work out how much it costs
+2. Prototype it, load test it and really understand the problem
+3. Break all the rules :)
