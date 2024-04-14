@@ -37,7 +37,7 @@ Can we take it even further? Yes!
 
 If we needed to scale up more, at some point XDP is not fast enough. 
 
-We could purchase and install a netronome NIC that would run the XDP hash function in hardware. Alternatively, we could explore implementing the hash with with programmable NIC using P4.
+We could purchase and install a netronome NIC that would run the XDP hash function in hardware. Alternatively, we could explore implementing the hash on a programmable NIC using P4.
 
 If we need to scale up even further, perhaps another 100 - 1000X, we could scale out horizontally with multiple bare metal machines with NICs that have onboard FPGA and implement the hash there. _Although, this is mildly insane._
 
@@ -47,4 +47,4 @@ Rewriting it in rust won't help you.
 
 1. Work out how much it costs
 2. Prototype it, load test it and really understand the problem
-3. Break all the rules :)
+3. Don't be afraid to break all the rules to get it to scale :)
