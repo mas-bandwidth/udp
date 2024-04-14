@@ -49,6 +49,6 @@ We have 28+100 bytes per-UDP packet, and 1M players sending 100 packets per-seco
 
 2,592,000 seconds in a month, so 2,592,000 * 12.8GB = 9,331,200 GB per-month.
 
-Ingress traffic to the UDP load balance is $331,776 USD per-month.
+Ingress traffic to the UDP load balancer is $331,776 USD per-month.
 
 Total cost: $6,076,036 USD per-month.
