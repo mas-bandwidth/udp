@@ -359,6 +359,9 @@ resource "google_compute_instance" "server" {
     export HOME=/app
     go get
     go build server.go
+    cat <<EOF > /app/server.env
+    BACKEND_ADDRESS=${google_compute_instance.backend.network_interface[0].network_ip}:40000
+    EOF
     cat <<EOF > /etc/sysctl.conf
     net.core.rmem_max=1000000000
     net.core.wmem_max=1000000000

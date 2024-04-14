@@ -8,6 +8,8 @@ import (
 	"os"
 	"os/signal"
 	"syscall"
+	"time"
+	"encoding/binary"
 	"bytes"
 	"net/http"
 	"golang.org/x/sys/unix"
@@ -23,9 +25,27 @@ const ResponseSize = 4 + 2 + 8
 
 var socket [NumThreads]*net.UDPConn
 
+var backendAddress net.UDPAddr
+
+func GetAddress(name string, defaultValue string) net.UDPAddr {
+	valueString, ok := os.LookupEnv(name)
+	if !ok {
+	    valueString = defaultValue
+	}
+	value, err := net.ResolveUDPAddr("udp", valueString)
+	if err != nil {
+		panic(fmt.Sprintf("invalid address in envvar %s", name))
+	}
+	return *value
+}
+
 func main() {
 
 	fmt.Printf("starting %d server threads on port %d\n", NumThreads, ServerPort)
+
+	backendAddress = GetAddress("BACKEND_ADDRESS", "127.0.0.1:50000")
+
+	fmt.Printf("backend address is %s\n", backendAddress.String())
 
 	for i := 0; i < NumThreads; i++ {
 		createServerSocket(i)

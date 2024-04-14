@@ -3,6 +3,7 @@ Description=UDP Backend Service
 
 [Service]
 ExecStart=/app/backend
+EnvironmentFile=/app/server.env
 Restart=always
 RestartSec=30
 TimeoutStopSec=90
