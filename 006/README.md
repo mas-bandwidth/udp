@@ -54,5 +54,5 @@ done.
 
 As close as I can get. I'm out of ideas for making the HTTP stuff any faster. I think I'm hitting IO limits on my machine.
 
-It's time to start going horizontal for the clients, so we have different source IP addresses hashing to cores on the server.
+It's time to start going horizontal for the clients, so we can have different source IP addresses hashing to different cores on the server.
 
