@@ -25,7 +25,7 @@ Let's run the system in bare metal.
 
 I love https://datapacket.com. They are an excellent bare metal hosting company. Picking the fattest bare metal server they have with a 40GB NIC, there are no ingress or egress bandwidth charges.
 
-On bare metal with a 40GB NIC we can handle the amount of traffic easily with XDP. The XDP program runs in native mode, whereas on google cloud it runs in SKB mode, so it's slower. There's also no virtualization overhead. All the CPUs on the bare metal are dedicated to doing the XDP work.
+On bare metal with a 40GB NIC we can handle the amount of traffic easily with XDP. The XDP program runs in native mode, whereas on google cloud it runs in SKB mode, so it's slower. There's also no virtualization overhead. All the cores on the bare metal are dedicated exclusively to doing the XDP work and you can tune the system as needed.
 
 The total cost for 1M clients is now: $8,430 USD per-month.
 
@@ -35,7 +35,7 @@ Can we take it even further? Yes!
 
 If we needed to scale up more, at some point XDP is not fast enough. 
 
-We could purchase and install a netronome NIC that would run the hash function in hardware. Alternatively, we could explore implementing the hash with with programmable NIC using P4.
+We could purchase and install a netronome NIC that would run the XDP hash function in hardware. Alternatively, we could explore implementing the hash with with programmable NIC using P4.
 
 If we need to scale up even further, perhaps another 100 - 1000X, we could scale out horizontally with multiple bare metal machines with NICs that have onboard FPGA and implement the hash there. _Although, this is mildly insane._
 
