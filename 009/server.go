@@ -88,6 +88,8 @@ func createServerSocket(threadIndex int) {
 
 func runServerThread(threadIndex int) {
 
+	backendURL := fmt.Sprintf("http://%s/hash", backendAddress.String())
+
 	conn := socket[threadIndex]
 
 	defer conn.Close()
