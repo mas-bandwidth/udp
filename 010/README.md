@@ -23,7 +23,7 @@ Let's run the system in bare metal.
 
 <img width="1348" alt="Screenshot 2024-04-14 at 10 06 40 AM" src="https://github.com/mas-bandwidth/udp/assets/696656/23e29eee-645c-4e61-bf7e-c4471d33f4f4">
 
-I love https://datapacket.com. They are an excellent bare metal hosting company. Picking the fattest bare metal server they have with a 40GB NIC, there are no ingress or egress bandwidth charges.
+I love https://datapacket.com. They are an excellent bare metal hosting company. Picking the fattest bare metal server they have with a 40GB bandwidth plan, there are no ingress or egress bandwidth charges past the the monthly cost.
 
 On bare metal with a 40GB NIC we can handle the amount of traffic easily with XDP. The XDP program runs in native mode, whereas on google cloud it runs in SKB mode, so it's slower. There's also no virtualization overhead. All the cores on the bare metal are dedicated exclusively to doing the XDP work and you can tune the system as needed.
 
