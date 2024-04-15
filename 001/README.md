@@ -40,7 +40,7 @@ Results on localhost interface on an old iMacPro, I can easily do around 100 cli
 
 Each client is on its own thread, and sleeps for 10ms before sending each packet. I believe we see ~9100 packets per-second sent because the sleeps run a bit long, on average.
 
-Somewhere around 400-500 packets per-second we start to see some drops.
+Somewhere around 400-500 clients I start to see some drops.
 
 At 1000 clients, I see signficant packet loss:
 
