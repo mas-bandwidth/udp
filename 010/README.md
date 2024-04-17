@@ -25,13 +25,13 @@ Let's run the system in bare metal.
 
 I love https://datapacket.com. They are an excellent bare metal hosting company. Picking the fattest bare metal server they have with a 40GB bandwidth plan, there are no ingress or egress bandwidth charges past the the monthly cost.
 
-On bare metal with a 40GB NIC we can handle the amount of traffic easily with XDP. The XDP program runs in native mode, whereas on google cloud it runs in SKB mode, so it's slower. There's also no virtualization overhead. All the cores on the bare metal are dedicated exclusively to doing the XDP work and you can tune the system as needed.
+Using XDP I can hit line rate on a 10G, 40G or 100G NIC. 
 
-More about XDP here: https://mas-bandwidth.com/xdp-for-game-programmers/
+100 packets per-second * 1M players = 100M packets per-second is pretty close to line rate for a 100G NIC for 100 byte packets. Assume I could request 100G bandwidth at twice the price. This is a bit too close for comfort, so I'd probably double up and get a second machine and load balance between them, so now the cost is 4X.
 
-The total cost for 1M clients is now: $8,430 USD per-month.
+The total cost for 1M clients is now: $33,720 USD per-month.
 
-$1,746,010 / $8,430 = 207X reduction in cost.
+$1,746,010 / $33,720 = 50X reduction in cost.
 
 Can we take it even further? Yes!
 
